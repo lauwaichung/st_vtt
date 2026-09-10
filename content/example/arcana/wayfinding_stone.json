@@ -1,0 +1,26 @@
+{
+  "id": "wayfinding_stone",
+  "name": "The Wayfinding Stone",
+  "kind": "minor",
+  "tags": ["small", "fragile"],
+  "description": "A palm-sized river stone that grows warm when pointed toward something you have lost.",
+  "questions": ["Who lost it before you?", "What did it cost you to learn its secret?"],
+  "prerequisites": "Spend a night meditating on what you have lost.",
+  "moves": [
+    {
+      "id": "stone_seek",
+      "name": "Seek with the Stone",
+      "trigger": "When you hold the stone and name something you have lost...",
+      "roll": {"stat": "wis"},
+      "outcomes": {
+        "10+": "The stone points true. Mark 1 charge.",
+        "7-9": "The stone points true, but something else notices. Mark 1 charge.",
+        "6-": "The stone goes cold. Mark XP."
+      }
+    }
+  ],
+  "trackers": [
+    {"id": "charges", "label": "Charges", "type": "pips", "max": 3},
+    {"id": "attuned", "label": "Attuned", "type": "toggle"}
+  ]
+}

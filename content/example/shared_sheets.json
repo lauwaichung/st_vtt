@@ -1,0 +1,85 @@
+{
+  "shared_sheets": [
+    {
+      "id": "village",
+      "name": "The Village",
+      "blurb": "The home everyone shares. Anyone at the table can edit it.",
+      "auto_create": true,
+      "visibility": "table",
+      "stats": [
+        {"id": "luck", "label": "Luck", "start": 1, "min": -3, "max": 3, "help": "How the year has been treating the place."},
+        {"id": "stores", "label": "Stores", "start": 1, "min": 0, "max": 9, "help": "Food and goods put by."},
+        {"id": "wealth", "label": "Wealth", "start": 0, "min": -3, "max": 3},
+        {"id": "folk", "label": "Folk", "start": 0, "min": -3, "max": 3, "help": "Growing or shrinking?"},
+        {"id": "walls", "label": "Walls", "start": 0, "min": -3, "max": 3, "help": "How ready the place is to fend off trouble."}
+      ],
+      "sizes": ["camp", "hamlet", "village", "town"],
+      "size_start": "village",
+      "debilities": [
+        {"id": "hungry", "label": "Hungry", "text": "The stores are not enough."},
+        {"id": "shaken", "label": "Shaken", "text": "Something recent has people scared."},
+        {"id": "divided", "label": "Divided", "text": "Neighbours are not speaking."}
+      ],
+      "sections": [
+        {"id": "resources", "title": "Resources", "type": "table", "required": false,
+         "columns": [{"id": "name", "label": "Resource"}, {"id": "notes", "label": "Notes"}]},
+        {"id": "defenses", "title": "Defenses", "type": "text", "required": false, "placeholder": "Ditch, fence, night watch, ..."},
+        {"id": "improvements", "title": "Improvements", "type": "checklist", "required": false,
+         "options": [
+           {"id": "granary", "label": "Granary", "text": "Takes a season to build. Winter costs 1 less Stores."},
+           {"id": "palisade", "label": "Palisade", "text": "Takes two seasons. +1 Walls."},
+           {"id": "market_day", "label": "Market Day", "text": "Neighbours come to trade each month. +1 Wealth in a good year."},
+           {"id": "well", "label": "Deep Well", "text": "Clean water in any season. ◇◇ mark one each time it is fouled.", "pips": 2}
+         ]},
+        {"id": "assets", "title": "Assets", "type": "table", "required": false,
+         "columns": [{"id": "name", "label": "Asset"}, {"id": "qty", "label": "Qty", "type": "number"}, {"id": "notes", "label": "Notes"}]},
+        {"id": "coin", "title": "Coin", "type": "table", "required": false,
+         "columns": [
+           {"id": "kind", "label": "Kind", "type": "select", "options": ["copper", "silver", "gold"]},
+           {"id": "chests", "label": "Chests", "type": "number"},
+           {"id": "purses", "label": "Purses", "type": "number"},
+           {"id": "coins", "label": "Coins", "type": "number"}
+         ]},
+        {"id": "residents", "title": "Residents", "type": "table", "required": false,
+         "columns": [{"id": "name", "label": "Name"}, {"id": "role", "label": "Occupation"}, {"id": "trait", "label": "Trait"}]},
+        {"id": "neighbors", "title": "Neighbours", "type": "table", "required": false,
+         "columns": [{"id": "name", "label": "Name"}, {"id": "from", "label": "From"}, {"id": "notes", "label": "Notes"}]},
+        {"id": "places", "title": "Places", "type": "table", "required": false,
+         "columns": [{"id": "key", "label": "Key"}, {"id": "name", "label": "Place"}, {"id": "notes", "label": "Notes"}]},
+        {"id": "safety", "title": "Table agreements", "type": "text", "required": false, "placeholder": "Topics we skip, topics we fade out, how we call a pause."}
+      ],
+      "moves": [
+        {
+          "id": "muster",
+          "name": "Muster",
+          "trigger": "When the village sends people out to deal with trouble...",
+          "text": "...roll +nothing and add Walls as a bonus in the dialog.",
+          "roll": {"stat": null},
+          "outcomes": {"10+": "They handle it and come home.", "7-9": "They handle it, but at a cost the GM names.", "6-": "It goes badly for them."}
+        }
+      ]
+    },
+    {
+      "id": "gm_screen",
+      "name": "GM Screen",
+      "blurb": "Only the GM can see this sheet. Track the people and problems the players have not met yet.",
+      "auto_create": false,
+      "visibility": "gm",
+      "sections": [
+        {"id": "npcs", "title": "NPCs & dangers", "type": "table", "required": false,
+         "columns": [
+           {"id": "name", "label": "Name"},
+           {"id": "tags", "label": "Tags"},
+           {"id": "hp", "label": "HP", "type": "number"},
+           {"id": "armor", "label": "Armor", "type": "number"},
+           {"id": "damage", "label": "Damage", "type": "dice"},
+           {"id": "instinct", "label": "Instinct"}
+         ]},
+        {"id": "threats", "title": "Threats", "type": "table", "required": false,
+         "columns": [{"id": "name", "label": "Threat"}, {"id": "clock", "label": "Clock", "type": "select", "options": ["1", "2", "3", "4", "5", "6"]}, {"id": "next", "label": "What happens next"}]},
+        {"id": "prep", "title": "Prep for next session", "type": "text", "required": false}
+      ],
+      "moves": []
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "followers": {
+    "loyalty_max": 3,
+    "tags": ["loyal", "brave", "cunning", "skilled", "timid", "greedy", "veteran", "green", "quiet", "kind"],
+    "costs": ["coin", "a good meal", "respect", "stories", "a debt repaid", "a chance to prove themselves"],
+    "instincts": ["to look after their own", "to get paid", "to prove themselves", "to go home"],
+    "fields": [
+      {"id": "origin", "label": "Origin", "type": "text"}
+    ]
+  }
+}

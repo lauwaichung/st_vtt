@@ -1,0 +1,45 @@
+{
+  "pack": {
+    "id": "example",
+    "name": "Example Pack",
+    "description": "A tiny placeholder pack that exercises every feature of the content schema. All names and text are invented; replace it with your own game content.",
+    "stats": [
+      {"id": "str", "label": "STR"},
+      {"id": "dex", "label": "DEX"},
+      {"id": "int", "label": "INT"},
+      {"id": "wis", "label": "WIS"},
+      {"id": "con", "label": "CON"},
+      {"id": "cha", "label": "CHA"}
+    ],
+    "stat_array": [2, 1, 1, 0, 0, -1],
+    "debilities": [
+      {"id": "battered", "label": "Battered", "affects": ["str", "dex"], "text": "Disadvantage on +STR and +DEX rolls."},
+      {"id": "rattled", "label": "Rattled", "affects": ["int", "wis"], "text": "Disadvantage on +INT and +WIS rolls."},
+      {"id": "drained", "label": "Drained", "affects": ["con", "cha"], "text": "Disadvantage on +CON and +CHA rolls."}
+    ],
+    "roll": {
+      "base": "2d6",
+      "advantage": "3d6kh2",
+      "disadvantage": "3d6kl2",
+      "tiers": [
+        {"label": "10+", "min": 10},
+        {"label": "7-9", "min": 7, "max": 9},
+        {"label": "6-", "max": 6}
+      ],
+      "mark_xp_on": ["6-"]
+    },
+    "xp": {"level_up_cost": "6 + 2*level", "start_level": 1},
+    "dice_presets": [
+      {"label": "Damage", "expr": "{damage_die}"},
+      {"label": "+nothing", "expr": "2d6"},
+      {"label": "d4", "expr": "1d4"},
+      {"label": "d6", "expr": "1d6"},
+      {"label": "d8", "expr": "1d8"},
+      {"label": "d10", "expr": "1d10"},
+      {"label": "d12", "expr": "1d12"}
+    ],
+    "load": {"light": 3, "normal": 6, "heavy": 9},
+    "gear_tags": ["hand", "close", "reach", "near", "far", "thrown", "heavy", "delicate", "warm", "loud"],
+    "hold_names": ["Guard"]
+  }
+}

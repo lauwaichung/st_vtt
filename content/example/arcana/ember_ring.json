@@ -1,0 +1,12 @@
+{
+  "id": "ember_ring",
+  "name": "The Ember Ring",
+  "kind": "major",
+  "tags": ["worn"],
+  "description": "A ring of dull iron that is always warm. While worn, you are never cold, and you may call up a candle's worth of flame.",
+  "questions": ["Where was it forged?", "What does it want from you?"],
+  "moves": [],
+  "trackers": [
+    {"id": "heat", "label": "Heat", "type": "counter"}
+  ]
+}

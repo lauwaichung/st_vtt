@@ -1,0 +1,85 @@
+{
+  "moves": {
+    "basic": [
+      {
+        "id": "take_a_risk",
+        "name": "Take a Risk",
+        "trigger": "When you act despite a clear threat...",
+        "text": "...say what you do and roll with the stat that best fits your approach.",
+        "roll": {"stat": "choose"},
+        "outcomes": {
+          "10+": "It goes the way you wanted.",
+          "7-9": "It works, but the GM offers a worse outcome, a hard bargain, or an ugly choice.",
+          "6-": "The threat lands. Mark XP."
+        }
+      },
+      {
+        "id": "brawl",
+        "name": "Brawl",
+        "trigger": "When you trade blows with something up close...",
+        "text": "...roll +STR.",
+        "roll": {"stat": "str"},
+        "outcomes": {
+          "10+": "Deal your damage. Choose one: you also get clear of them, or you deal +1d4 and take their hit.",
+          "7-9": "Deal your damage and take their hit.",
+          "6-": "You are hit and gain nothing for it. Mark XP."
+        }
+      },
+      {
+        "id": "hold_the_line",
+        "name": "Hold the Line",
+        "trigger": "When you stand guard over a place, a person, or a thing...",
+        "text": "...roll +CON.",
+        "roll": {"stat": "con"},
+        "hold": {"name": "Guard", "note": "Spend 1 Guard to take a hit meant for someone else, halve a blow, or force an attacker to deal with you first."},
+        "outcomes": {
+          "10+": "Hold 3 Guard.",
+          "7-9": "Hold 1 Guard.",
+          "6-": "Hold nothing; the GM says what slips past you. Mark XP."
+        }
+      },
+      {
+        "id": "recall_lore",
+        "name": "Recall Lore",
+        "trigger": "When you search your memory for something useful...",
+        "roll": {"stat": "int"},
+        "outcomes": {
+          "10+": "The GM tells you something true and useful.",
+          "7-9": "The GM tells you something true; making it useful is up to you.",
+          "6-": "You remember it wrong. Mark XP."
+        }
+      },
+      {
+        "id": "sway",
+        "name": "Sway",
+        "trigger": "When you lean on someone who would rather not go along...",
+        "roll": {"stat": "cha"},
+        "outcomes": {
+          "10+": "They go along with it, or tell you plainly what it would take.",
+          "7-9": "They name a price, and it is not a small one.",
+          "6-": "They dig in, and now they are watching you. Mark XP."
+        }
+      }
+    ],
+    "special": [
+      {
+        "id": "last_breath",
+        "name": "Last Breath",
+        "trigger": "When you drop to 0 HP...",
+        "text": "...roll +nothing.",
+        "roll": {"stat": null},
+        "outcomes": {
+          "10+": "You claw your way back to 1 HP. Say what it cost you.",
+          "7-9": "You live, but you are out of the fight until someone tends to you.",
+          "6-": "This is the end, or something worse than an end. The GM will say."
+        }
+      },
+      {
+        "id": "wrap_up",
+        "name": "Wrap Up",
+        "trigger": "When the session ends...",
+        "text": "Mark XP for each: you acted on your instinct; a relationship shifted; the group learned something new about the world; the group made the village better."
+      }
+    ]
+  }
+}

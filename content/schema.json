@@ -1,0 +1,1202 @@
+{
+  "$defs": {
+    "Arcanum": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "default": "minor",
+          "description": "Free-form, e.g. 'major' or 'minor'.",
+          "title": "Kind",
+          "type": "string"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "questions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "prerequisites": {
+          "default": "",
+          "title": "Prerequisites",
+          "type": "string"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/Move"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "trackers": {
+          "items": {
+            "$ref": "#/$defs/Tracker"
+          },
+          "title": "Trackers",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Arcanum",
+      "type": "object"
+    },
+    "ChooseN": {
+      "additionalProperties": false,
+      "properties": {
+        "n": {
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "from": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "From",
+          "type": "array"
+        }
+      },
+      "required": [
+        "n",
+        "from"
+      ],
+      "title": "ChooseN",
+      "type": "object"
+    },
+    "Column": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "type": {
+          "default": "text",
+          "enum": [
+            "text",
+            "number",
+            "check",
+            "select",
+            "dice"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Options",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Column",
+      "type": "object"
+    },
+    "Debility": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "affects": {
+          "description": "Stat ids that roll with disadvantage while marked.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Affects",
+          "type": "array"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Debility",
+      "type": "object"
+    },
+    "DicePreset": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "expr": {
+          "description": "Dice expression; may use {damage_die} or {<stat id>}.",
+          "title": "Expr",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "expr"
+      ],
+      "title": "DicePreset",
+      "type": "object"
+    },
+    "Effects": {
+      "additionalProperties": false,
+      "properties": {
+        "moves": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "armor": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Armor"
+        },
+        "hp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hp"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        }
+      },
+      "title": "Effects",
+      "type": "object"
+    },
+    "FollowerRules": {
+      "additionalProperties": false,
+      "properties": {
+        "loyalty_max": {
+          "default": 3,
+          "title": "Loyalty Max",
+          "type": "integer"
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "costs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Costs",
+          "type": "array"
+        },
+        "instincts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Instincts",
+          "type": "array"
+        },
+        "fields": {
+          "description": "Extra per-follower fields.",
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "title": "FollowerRules",
+      "type": "object"
+    },
+    "Hold": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "Hold",
+      "type": "object"
+    },
+    "LoadRules": {
+      "additionalProperties": false,
+      "properties": {
+        "light": {
+          "default": 3,
+          "title": "Light",
+          "type": "integer"
+        },
+        "normal": {
+          "default": 6,
+          "title": "Normal",
+          "type": "integer"
+        },
+        "heavy": {
+          "default": 9,
+          "title": "Heavy",
+          "type": "integer"
+        }
+      },
+      "title": "LoadRules",
+      "type": "object"
+    },
+    "Move": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "trigger": {
+          "default": "",
+          "title": "Trigger",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "description": "Markdown body.",
+          "title": "Text",
+          "type": "string"
+        },
+        "roll": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RollSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "outcomes": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Tier label -> markdown.",
+          "title": "Outcomes",
+          "type": "object"
+        },
+        "hold": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Hold"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pips": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pips"
+        },
+        "requires": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Requires"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "array"
+        },
+        "replaces": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Replaces"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "Move",
+      "type": "object"
+    },
+    "NameList": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Names",
+          "type": "array"
+        }
+      },
+      "required": [
+        "label",
+        "names"
+      ],
+      "title": "NameList",
+      "type": "object"
+    },
+    "Option": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        },
+        "effects": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Effects"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "pips": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Uses/charges tracked on the sheet while the option is selected.",
+          "title": "Pips"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Option",
+      "type": "object"
+    },
+    "PackMeta": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "title": "Description",
+          "type": "string"
+        },
+        "stats": {
+          "items": {
+            "$ref": "#/$defs/Stat"
+          },
+          "minItems": 1,
+          "title": "Stats",
+          "type": "array"
+        },
+        "stat_array": {
+          "description": "Values to distribute at creation.",
+          "items": {
+            "type": "integer"
+          },
+          "title": "Stat Array",
+          "type": "array"
+        },
+        "debilities": {
+          "items": {
+            "$ref": "#/$defs/Debility"
+          },
+          "title": "Debilities",
+          "type": "array"
+        },
+        "roll": {
+          "$ref": "#/$defs/RollRules"
+        },
+        "xp": {
+          "$ref": "#/$defs/XpRules"
+        },
+        "dice_presets": {
+          "items": {
+            "$ref": "#/$defs/DicePreset"
+          },
+          "title": "Dice Presets",
+          "type": "array"
+        },
+        "load": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LoadRules"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "gear_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Gear Tags",
+          "type": "array"
+        },
+        "hold_names": {
+          "description": "Extra hold currencies shown on every sheet.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Hold Names",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "stats"
+      ],
+      "title": "PackMeta",
+      "type": "object"
+    },
+    "Playbook": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "blurb": {
+          "default": "",
+          "title": "Blurb",
+          "type": "string"
+        },
+        "hp_max": {
+          "minimum": 1,
+          "title": "Hp Max",
+          "type": "integer"
+        },
+        "damage_die": {
+          "default": "1d6",
+          "title": "Damage Die",
+          "type": "string"
+        },
+        "armor": {
+          "default": 0,
+          "title": "Armor",
+          "type": "integer"
+        },
+        "stat_array": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "integer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Stat Array"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/Move"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "starting_moves": {
+          "$ref": "#/$defs/StartingMoves"
+        },
+        "inserts": {
+          "items": {
+            "enum": [
+              "gear",
+              "followers",
+              "arcana"
+            ],
+            "type": "string"
+          },
+          "title": "Inserts",
+          "type": "array"
+        },
+        "hold_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hold Names",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "hp_max"
+      ],
+      "title": "Playbook",
+      "type": "object"
+    },
+    "Requires": {
+      "additionalProperties": false,
+      "properties": {
+        "level": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Level"
+        },
+        "moves": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Moves",
+          "type": "array"
+        }
+      },
+      "title": "Requires",
+      "type": "object"
+    },
+    "RollRules": {
+      "additionalProperties": false,
+      "properties": {
+        "base": {
+          "default": "2d6",
+          "title": "Base",
+          "type": "string"
+        },
+        "advantage": {
+          "default": "3d6kh2",
+          "title": "Advantage",
+          "type": "string"
+        },
+        "disadvantage": {
+          "default": "3d6kl2",
+          "title": "Disadvantage",
+          "type": "string"
+        },
+        "tiers": {
+          "items": {
+            "$ref": "#/$defs/Tier"
+          },
+          "title": "Tiers",
+          "type": "array"
+        },
+        "mark_xp_on": {
+          "description": "Tier labels that suggest marking XP.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Mark Xp On",
+          "type": "array"
+        }
+      },
+      "title": "RollRules",
+      "type": "object"
+    },
+    "RollSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "stat": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "A stat id, a list of stat ids the player chooses from, 'choose' for any stat, or null for +nothing.",
+          "title": "Stat"
+        },
+        "bonus": {
+          "default": 0,
+          "title": "Bonus",
+          "type": "integer"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        }
+      },
+      "title": "RollSpec",
+      "type": "object"
+    },
+    "Section": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "choose",
+            "multichoose",
+            "checklist",
+            "pips",
+            "text",
+            "table",
+            "names"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "help": {
+          "default": "",
+          "title": "Help",
+          "type": "string"
+        },
+        "options": {
+          "description": "For choose/multichoose/checklist.",
+          "items": {
+            "$ref": "#/$defs/Option"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "multichoose: minimum picks required (creation checklist).",
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "multichoose: maximum picks. pips: number of pips.",
+          "title": "Max"
+        },
+        "columns": {
+          "description": "For table.",
+          "items": {
+            "$ref": "#/$defs/Column"
+          },
+          "title": "Columns",
+          "type": "array"
+        },
+        "lists": {
+          "description": "For names.",
+          "items": {
+            "$ref": "#/$defs/NameList"
+          },
+          "title": "Lists",
+          "type": "array"
+        },
+        "placeholder": {
+          "default": "",
+          "title": "Placeholder",
+          "type": "string"
+        },
+        "required": {
+          "default": true,
+          "description": "Shown in the creation checklist when unfilled.",
+          "title": "Required",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "type"
+      ],
+      "title": "Section",
+      "type": "object"
+    },
+    "SharedSheetDef": {
+      "additionalProperties": false,
+      "description": "A template for a sheet the whole table (or only the GM) edits together: the village, a GM screen, ...",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "default": "Shared sheet",
+          "title": "Name",
+          "type": "string"
+        },
+        "blurb": {
+          "default": "",
+          "title": "Blurb",
+          "type": "string"
+        },
+        "auto_create": {
+          "default": false,
+          "description": "Create one instance the first time the campaign runs.",
+          "title": "Auto Create",
+          "type": "boolean"
+        },
+        "visibility": {
+          "default": "table",
+          "description": "'gm' sheets are only visible to GMs.",
+          "enum": [
+            "table",
+            "gm"
+          ],
+          "title": "Visibility",
+          "type": "string"
+        },
+        "stats": {
+          "items": {
+            "$ref": "#/$defs/SheetStat"
+          },
+          "title": "Stats",
+          "type": "array"
+        },
+        "sizes": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sizes",
+          "type": "array"
+        },
+        "size_start": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Size Start"
+        },
+        "debilities": {
+          "items": {
+            "$ref": "#/$defs/Debility"
+          },
+          "title": "Debilities",
+          "type": "array"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/Move"
+          },
+          "title": "Moves",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "SharedSheetDef",
+      "type": "object"
+    },
+    "SheetStat": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "start": {
+          "default": 0,
+          "title": "Start",
+          "type": "integer"
+        },
+        "min": {
+          "default": -3,
+          "title": "Min",
+          "type": "integer"
+        },
+        "max": {
+          "default": 3,
+          "title": "Max",
+          "type": "integer"
+        },
+        "help": {
+          "default": "",
+          "title": "Help",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "SheetStat",
+      "type": "object"
+    },
+    "StartingMoves": {
+      "additionalProperties": false,
+      "properties": {
+        "fixed": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Fixed",
+          "type": "array"
+        },
+        "choose": {
+          "items": {
+            "$ref": "#/$defs/ChooseN"
+          },
+          "title": "Choose",
+          "type": "array"
+        }
+      },
+      "title": "StartingMoves",
+      "type": "object"
+    },
+    "Stat": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "Short key used in moves, e.g. 'str'.",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "description": "Display label, e.g. 'STR'.",
+          "title": "Label",
+          "type": "string"
+        },
+        "min": {
+          "default": -3,
+          "title": "Min",
+          "type": "integer"
+        },
+        "max": {
+          "default": 3,
+          "title": "Max",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Stat",
+      "type": "object"
+    },
+    "Tier": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "description": "e.g. '10+', '7-9', '6-'. Used as the key in move outcomes.",
+          "title": "Label",
+          "type": "string"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "title": "Tier",
+      "type": "object"
+    },
+    "Tracker": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "type": {
+          "default": "pips",
+          "enum": [
+            "pips",
+            "counter",
+            "toggle"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Tracker",
+      "type": "object"
+    },
+    "XpRules": {
+      "additionalProperties": false,
+      "properties": {
+        "level_up_cost": {
+          "default": "6 + 2*level",
+          "description": "Arithmetic in `level`.",
+          "title": "Level Up Cost",
+          "type": "string"
+        },
+        "start_level": {
+          "default": 1,
+          "title": "Start Level",
+          "type": "integer"
+        },
+        "max_xp": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Xp"
+        }
+      },
+      "title": "XpRules",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "pack": {
+      "$ref": "#/$defs/PackMeta"
+    },
+    "moves": {
+      "additionalProperties": {
+        "items": {
+          "$ref": "#/$defs/Move"
+        },
+        "type": "array"
+      },
+      "description": "Move groups shared by all PCs, e.g. basic/special.",
+      "title": "Moves",
+      "type": "object"
+    },
+    "playbooks": {
+      "items": {
+        "$ref": "#/$defs/Playbook"
+      },
+      "title": "Playbooks",
+      "type": "array"
+    },
+    "followers": {
+      "$ref": "#/$defs/FollowerRules"
+    },
+    "arcana": {
+      "items": {
+        "$ref": "#/$defs/Arcanum"
+      },
+      "title": "Arcana",
+      "type": "array"
+    },
+    "shared_sheets": {
+      "items": {
+        "$ref": "#/$defs/SharedSheetDef"
+      },
+      "title": "Shared Sheets",
+      "type": "array"
+    }
+  },
+  "required": [
+    "pack"
+  ],
+  "title": "ContentPack",
+  "type": "object"
+}

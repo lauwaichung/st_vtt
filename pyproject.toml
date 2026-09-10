@@ -1,0 +1,35 @@
+[project]
+name = "st_vtt"
+version = "0.1.0"
+description = "Shared Table: a lightweight sheet-first virtual tabletop for Stonetop and other PbtA games."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "pydantic>=2.7",
+    "itsdangerous>=2.2",
+    "diff-match-patch>=20241021",
+]
+
+[project.scripts]
+st-vtt = "st_vtt.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+    "websockets>=12",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["st_vtt"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

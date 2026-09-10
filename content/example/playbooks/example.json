@@ -1,0 +1,157 @@
+{
+  "id": "wanderer",
+  "name": "The Wanderer",
+  "blurb": "A placeholder playbook showing every section type. Copy it to make real ones.",
+  "hp_max": 18,
+  "damage_die": "1d8",
+  "armor": 0,
+  "inserts": ["gear", "followers", "arcana"],
+  "hold_names": ["Focus"],
+  "sections": [
+    {
+      "id": "background",
+      "title": "Background",
+      "type": "choose",
+      "help": "Choose one. Your background grants a starting move.",
+      "options": [
+        {"id": "trailhand", "label": "Trailhand", "text": "You learned the roads by walking them.", "effects": {"moves": ["trailsense"]}},
+        {"id": "returned", "label": "Returned", "text": "You left for years and came back different.", "effects": {"moves": ["sharp_tongue"], "armor": 1}}
+      ]
+    },
+    {
+      "id": "instinct",
+      "title": "Instinct",
+      "type": "choose",
+      "help": "Mark XP at end of session when you acted on it.",
+      "options": [
+        {"id": "curiosity", "label": "Curiosity", "text": "...to go and see for yourself."},
+        {"id": "restlessness", "label": "Restlessness", "text": "...to keep moving."}
+      ]
+    },
+    {
+      "id": "appearance",
+      "title": "Appearance",
+      "type": "multichoose",
+      "help": "Pick as many as fit.",
+      "min": 1,
+      "options": [
+        {"id": "weathered", "label": "weathered"},
+        {"id": "sharp_eyed", "label": "sharp-eyed"},
+        {"id": "quiet", "label": "quiet"},
+        {"id": "smiling", "label": "always smiling"}
+      ]
+    },
+    {
+      "id": "name",
+      "title": "Name",
+      "type": "names",
+      "help": "Pick a list, then a name, or make one up.",
+      "lists": [
+        {"label": "Hill names", "names": ["Bryn", "Cadi", "Dai", "Efa"]},
+        {"label": "Valley names", "names": ["Anselm", "Berta", "Corin", "Dagny"]}
+      ]
+    },
+    {
+      "id": "possessions",
+      "title": "Special Possessions",
+      "type": "multichoose",
+      "help": "Pick 2.",
+      "min": 2,
+      "max": 2,
+      "options": [
+        {"id": "map", "label": "A worn map", "text": "Advantage to Recall Lore about routes."},
+        {"id": "lantern", "label": "A storm lantern", "text": "Never goes out in wind or rain."},
+        {"id": "dog", "label": "A loyal dog", "text": "Add it as a follower."},
+        {"id": "kit", "label": "Healer's kit", "text": "Bandages and salves.", "pips": 3}
+      ]
+    },
+    {
+      "id": "history",
+      "title": "History",
+      "type": "checklist",
+      "help": "Check any that are true.",
+      "required": false,
+      "options": [
+        {"id": "far", "label": "I have been farther than anyone else here."},
+        {"id": "lost", "label": "I lost someone on the road."},
+        {"id": "owed", "label": "Someone in the village owes me."}
+      ]
+    },
+    {
+      "id": "provisions",
+      "title": "Provisions",
+      "type": "pips",
+      "help": "Uses of trail food.",
+      "max": 4,
+      "required": false
+    },
+    {
+      "id": "relationships",
+      "title": "Relationships",
+      "type": "table",
+      "required": false,
+      "columns": [
+        {"id": "who", "label": "Who", "type": "text"},
+        {"id": "what", "label": "What", "type": "text"},
+        {"id": "close", "label": "Close?", "type": "check"}
+      ]
+    },
+    {
+      "id": "goal",
+      "title": "Current goal",
+      "type": "text",
+      "required": false,
+      "placeholder": "What are you after right now?"
+    }
+  ],
+  "starting_moves": {
+    "fixed": ["well_traveled"],
+    "choose": [{"n": 1, "from": ["watchful", "iron_gut"]}]
+  },
+  "moves": [
+    {
+      "id": "well_traveled",
+      "name": "Well Traveled",
+      "text": "When you **Recall Lore** about a place you have visited, take advantage.",
+      "tags": ["starting"]
+    },
+    {
+      "id": "trailsense",
+      "name": "Trailsense",
+      "trigger": "When you lead the way through country you do not know...",
+      "roll": {"stat": "wis"},
+      "outcomes": {
+        "10+": "You find the way, and hold 2 Focus.",
+        "7-9": "You find the way, and hold 1 Focus.",
+        "6-": "You are lost. Mark XP."
+      },
+      "hold": {"name": "Focus", "note": "Spend 1 Focus to notice something before it notices you."}
+    },
+    {
+      "id": "sharp_tongue",
+      "name": "Sharp Tongue",
+      "trigger": "When you Sway someone with something they want...",
+      "roll": {"stat": "cha", "bonus": 1},
+      "outcomes": {
+        "10+": "As Sway, and they owe you.",
+        "7-9": "As Sway.",
+        "6-": "Mark XP."
+      }
+    },
+    {"id": "watchful", "name": "Watchful", "text": "You always notice an ambush before it springs."},
+    {"id": "iron_gut", "name": "Iron Gut", "text": "You can eat anything. ◇◇◇ mark one each time you do; when full, clear and take +1 HP max.", "pips": 3},
+    {
+      "id": "second_wind",
+      "name": "Second Wind",
+      "text": "Once per session, regain 1d8 HP.",
+      "requires": {"level": 2},
+      "pips": 1
+    },
+    {
+      "id": "tireless",
+      "name": "Tireless",
+      "text": "Requires Trailsense. You never tire on the road.",
+      "requires": {"level": 6, "moves": ["trailsense"]}
+    }
+  ]
+}
