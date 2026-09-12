@@ -12,3 +12,6 @@ content/*
 !content/schema.json
 !content/SCHEMA.md
 !content/example/
+
+# Checks against a private content pack; the pack itself is not in the repo either.
+tests/private/

@@ -24,7 +24,7 @@
   const holdNames = $derived.by(() => {
     const names = new Set<string>();
     for (const m of def?.moves ?? []) if (m.hold) names.add(m.hold.name);
-    for (const n of Object.keys(doc.moves?.hold ?? {})) names.add(n);
+    for (const n of Object.keys(doc.moves.hold)) names.add(n);
     return [...names];
   });
   const subtitle = $derived([def?.visibility === 'gm' ? 'GM only' : 'shared', def?.name, doc.size].filter(Boolean).join(' · '));
@@ -93,14 +93,14 @@
     {#if def.moves.length}
       <Collapsible id="shared.{row.id}.moves" title="Moves" open={false}>
         {#each def.moves as m (m.id)}
-          <MoveCard move={m} characterId={null} {editable} compact
-            pips={doc.moves?.pips?.[m.id] ?? 0} onpips={m.pips ? (v) => p(`/moves/pips/${m.id}`, v) : undefined} />
+          <MoveCard move={m} characterId={null} sharedId={row.id} {editable} compact {doc} {p}
+            tracks={doc.moves.tracks[m.id]} ontrack={(kind, v) => p(`/moves/tracks/${m.id}/${kind}`, v)} />
         {/each}
         {#if holdNames.length}
           <div class="row" style="gap:1em;margin-top:.5em">
             <span class="muted small">Hold</span>
             {#each holdNames as h}
-              <Stepper label={h} value={doc.moves?.hold?.[h] ?? 0} min={0} onchange={(v) => p(`/moves/hold/${h}`, v)} path={`/moves/hold/${h}`} />
+              <Stepper label={h} value={doc.moves.hold[h] ?? 0} min={0} onchange={(v) => p(`/moves/hold/${h}`, v)} path={`/moves/hold/${h}`} />
             {/each}
           </div>
         {/if}

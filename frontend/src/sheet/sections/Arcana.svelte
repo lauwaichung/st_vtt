@@ -78,7 +78,8 @@
             <span class="row tr">
               <span class="muted small">{t.label}</span>
               {#if t.type === 'pips'}
-                <Pips value={Number(a.state?.[t.id]) || 0} max={t.max ?? 3} onchange={(v) => p(`${base}/state/${t.id}`, v)} path={`${base}/state/${t.id}`} disabled={!editable} />
+                <!-- an arcanum's boxes are charges: circles, like the book -->
+                <Pips shape="circle" value={Number(a.state?.[t.id]) || 0} max={t.max ?? 3} onchange={(v) => p(`${base}/state/${t.id}`, v)} path={`${base}/state/${t.id}`} disabled={!editable} />
               {:else if t.type === 'counter'}
                 <Stepper value={Number(a.state?.[t.id]) || 0} min={0} max={t.max ?? Infinity} onchange={(v) => p(`${base}/state/${t.id}`, v)} path={`${base}/state/${t.id}`} disabled={!editable} />
               {:else}
@@ -89,7 +90,7 @@
         </div>
       {/if}
       {#each a.moves ?? [] as m (m.id)}
-        <MoveCard move={m} {characterId} {editable} pips={doc.moves.pips?.[m.id] ?? 0} onpips={m.pips ? (v) => p(`/moves/pips/${m.id}`, v) : undefined} />
+        <MoveCard move={m} {characterId} {editable} {doc} {p} tracks={doc.moves.tracks[m.id]} ontrack={(kind, v) => p(`/moves/tracks/${m.id}/${kind}`, v)} />
       {/each}
       <DebouncedText multiline rows={2} value={a.notes ?? ''} path={`${base}/notes`} readonly={!editable} placeholder="Notes" />
     </div>

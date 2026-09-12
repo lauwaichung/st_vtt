@@ -22,14 +22,15 @@
       ],
       "sections": [
         {"id": "resources", "title": "Resources", "type": "table", "required": false,
-         "columns": [{"id": "name", "label": "Resource"}, {"id": "notes", "label": "Notes"}]},
+         "columns": [{"id": "name", "label": "Resource"}, {"id": "notes", "label": "Notes"}],
+         "start": [{"name": "Farming", "notes": "beans, oats"}, {"name": "A good well", "notes": ""}]},
         {"id": "defenses", "title": "Defenses", "type": "text", "required": false, "placeholder": "Ditch, fence, night watch, ..."},
         {"id": "improvements", "title": "Improvements", "type": "checklist", "required": false,
          "options": [
            {"id": "granary", "label": "Granary", "text": "Takes a season to build. Winter costs 1 less Stores."},
            {"id": "palisade", "label": "Palisade", "text": "Takes two seasons. +1 Walls."},
            {"id": "market_day", "label": "Market Day", "text": "Neighbours come to trade each month. +1 Wealth in a good year."},
-           {"id": "well", "label": "Deep Well", "text": "Clean water in any season. ◇◇ mark one each time it is fouled.", "pips": 2}
+           {"id": "well", "label": "Deep Well", "text": "Clean water in any season.", "tracks": {"marks": 2}}
          ]},
         {"id": "assets", "title": "Assets", "type": "table", "required": false,
          "columns": [{"id": "name", "label": "Asset"}, {"id": "qty", "label": "Qty", "type": "number"}, {"id": "notes", "label": "Notes"}]},
@@ -55,7 +56,13 @@
           "trigger": "When the village sends people out to deal with trouble...",
           "text": "...roll +nothing and add Walls as a bonus in the dialog.",
           "roll": {"stat": null},
-          "outcomes": {"10+": "They handle it and come home.", "7-9": "They handle it, but at a cost the GM names.", "6-": "It goes badly for them."}
+          "outcomes": {
+           "10+": "They handle it and come home.",
+           "7-9": "They handle it, but at a cost the GM names.",
+           "6-": {"text": "It goes badly for them.",
+                  "apply": [{"kind": "stat", "id": "luck", "delta": -1},
+                            {"kind": "sheet_debility", "id": "shaken"}]}
+         }
         }
       ]
     },

@@ -20,8 +20,8 @@
   {#if p.text}<Markdown text={p.text} />{/if}
   {#if p.outcomes && Object.keys(p.outcomes).length}
     <dl class="outcomes">
-      {#each Object.entries(p.outcomes) as [tier, text]}
-        <dt>{tier}</dt><dd><Markdown text={String(text)} /></dd>
+      {#each Object.entries(p.outcomes) as [tier, outcome]}
+        <dt>{tier}</dt><dd><Markdown text={String(outcome)} /></dd>
       {/each}
     </dl>
   {/if}

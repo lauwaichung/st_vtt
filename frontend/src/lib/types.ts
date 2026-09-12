@@ -12,31 +12,83 @@ export interface PackMeta {
   debilities: Debility[]; roll: RollRules; xp: XpRules; dice_presets: DicePreset[];
   load: LoadRules | null; gear_tags: string[]; hold_names: string[];
 }
-export interface RollSpec { stat: string | string[] | null; bonus: number; label: string | null }
+export interface ModifierOption { label: string; value: number }
+export interface Modifier { id: string; label: string; options: ModifierOption[]; default: number; help: string }
+export interface RollSpec { stat: string | string[] | null; bonus: number; label: string | null; modifiers: Modifier[] }
 export interface Hold { name: string; note: string }
+/** What a roll's outcome can do to the sheet; the roll card offers each one as a button. */
+export type OutcomeAction =
+  | { kind: 'xp'; n: number; label: string }
+  | { kind: 'hp'; amount: string; label: string }
+  | { kind: 'hold'; name: string; n: number; label: string }
+  | { kind: 'debility'; id: string | null; label: string }
+  | { kind: 'stat'; id: string; delta: number; label: string }
+  | { kind: 'sheet_debility'; id: string; label: string };
+export interface Outcome { text: string; apply: OutcomeAction[] }
 export interface Requires { level: number | null; moves: string[] }
+/** The boxes the book prints: diamonds for carried load, circles for uses and ammo statuses. */
+export interface Tracks { marks: number | null; bulk: number | null; uses: number | null; statuses: string[] }
+export type TrackKind = 'marks' | 'bulk' | 'uses' | 'statuses';
+/** How many boxes of each declared kind are marked. */
+export type TrackState = Partial<Record<TrackKind, number>>;
+/** A move that lets you take moves from other playbooks. */
+export interface Grant { from_playbooks: string[]; n: number; exclude_tags: string[] }
 export interface Move {
   id: string; name: string; trigger: string; text: string; roll: RollSpec | null;
-  outcomes: Record<string, string>; hold: Hold | null; pips: number | null;
+  outcomes: Record<string, Outcome>; hold: Hold | null; tracks: Tracks;
   requires: Requires | null; tags: string[]; replaces: string | null;
+  /** taking this move adds the named insert to the sheet */
+  insert: string | null;
+  /** taking this move lets you pick moves from other playbooks */
+  grants: Grant | null;
+  /** a checklist the move carries ("each time you take this move, pick 1"); picks stay picked */
+  options: Option[]; min: number | null; max: number | null;
 }
-export interface Effects { moves: string[]; armor: number | null; hp: number | null; tags: string[] }
-export interface Option { id: string; label: string; text: string; effects: Effects | null; pips: number | null }
+
+/** Boxes declared, paired with how many are marked; what Tracks.svelte renders. */
+export function trackKinds(t: Tracks | undefined): { kind: TrackKind; boxes: number; labels?: string[] }[] {
+  if (!t) return [];
+  const out: { kind: TrackKind; boxes: number; labels?: string[] }[] = [];
+  if (t.marks) out.push({ kind: 'marks', boxes: t.marks });
+  if (t.bulk) out.push({ kind: 'bulk', boxes: t.bulk });
+  if (t.uses) out.push({ kind: 'uses', boxes: t.uses });
+  if (t.statuses?.length) out.push({ kind: 'statuses', boxes: t.statuses.length, labels: t.statuses });
+  return out;
+}
+export interface Effects { moves: string[]; inserts: string[]; armor: number | null; hp: number | null; tags: string[] }
+export interface Option {
+  id: string; label: string; text: string; effects: Effects | null; tracks: Tracks;
+  /** when set, a one-line write-in box appears while this option is selected (the value is its placeholder) */
+  write_in: string | null;
+  /** a nested sub-choice, revealed only when this option is selected */
+  options: Option[]; min: number | null; max: number | null;
+  /** prose with no checkbox: a heading, an instruction, or (with tracks) a plain tracker. Its children are always shown. */
+  note: boolean;
+}
 export interface Column { id: string; label: string; type: 'text' | 'number' | 'check' | 'select' | 'dice'; options: string[] }
 export interface NameList { label: string; names: string[] }
-export type SectionType = 'choose' | 'multichoose' | 'checklist' | 'pips' | 'text' | 'table' | 'names';
+/** one row of a `lines` section: pick exactly one option, or write your own */
+export interface Line { id: string; label: string; options: Option[]; write_in: string | null }
+export type SectionType = 'choose' | 'multichoose' | 'checklist' | 'lines' | 'pips' | 'text' | 'table' | 'names';
 export interface Section {
-  id: string; title: string; type: SectionType; help: string; options: Option[];
+  id: string; title: string; type: SectionType; help: string; options: Option[]; lines: Line[];
   min: number | null; max: number | null; columns: Column[]; lists: NameList[];
-  placeholder: string; required: boolean;
+  placeholder: string; required: boolean; collapsed: boolean; start: unknown;
 }
 export interface ChooseN { n: number; from: string[] }
 export interface StartingMoves { fixed: string[]; choose: ChooseN[] }
 export interface Playbook {
   id: string; name: string; blurb: string; hp_max: number; damage_die: string; armor: number;
   stat_array: number[] | null; sections: Section[]; moves: Move[]; starting_moves: StartingMoves;
-  inserts: ('gear' | 'followers' | 'arcana')[]; hold_names: string[];
+  /** core section names ('gear', 'followers', 'arcana') and/or ids from the pack's `inserts` */
+  inserts: string[]; hold_names: string[];
 }
+/** one of the half-sheets a playbook comes with: a warband, a spellbook, the ghost you become, ... */
+export interface InsertDef {
+  id: string; name: string; kind: string; blurb: string; description: string;
+  sections: Section[]; moves: Move[]; starting_moves: StartingMoves; hold_names: string[];
+}
+export const CORE_INSERTS = ['gear', 'followers', 'arcana'] as const;
 export interface FollowerRules { loyalty_max: number; tags: string[]; costs: string[]; instincts: string[]; fields: Column[] }
 export interface Tracker { id: string; label: string; type: 'pips' | 'counter' | 'toggle'; max: number | null }
 export interface Arcanum {
@@ -50,7 +102,7 @@ export interface SharedSheetDef {
   debilities: Debility[]; sections: Section[]; moves: Move[];
 }
 export interface ContentPack {
-  pack: PackMeta; moves: Record<string, Move[]>; playbooks: Playbook[];
+  pack: PackMeta; moves: Record<string, Move[]>; playbooks: Playbook[]; inserts: InsertDef[];
   followers: FollowerRules; arcana: Arcanum[]; shared_sheets: SharedSheetDef[];
 }
 
@@ -64,23 +116,33 @@ export interface Follower {
 export interface ArcanumInstance extends Omit<Arcanum, 'id'> {
   id: string; ref: string | null; answers: Record<string, string>; state: Record<string, number | boolean>; notes: string;
 }
-export interface GearItem { id: string; name: string; tags: string[]; weight: number; uses: { max: number; used: number } | null; notes: string }
+export interface GearItem {
+  id: string; name: string; tags: string[]; bulk: number;
+  uses: { max: number; used: number } | null;
+  /** ammo statuses, marked left to right */
+  statuses: string[]; statuses_marked: number;
+  notes: string;
+}
 export interface CharacterDoc {
   pack_id: string; playbook: string; name: string; pronouns: string; look: string;
   stats: Record<string, number>; hp: { current: number; max: number }; armor: number; xp: number; level: number;
   debilities: Record<string, boolean>;
-  moves: { taken: string[]; pips: Record<string, number>; hold: Record<string, number> };
+  moves: { taken: string[]; tracks: Record<string, TrackState>; hold: Record<string, number>; options: Record<string, string[]> };
+  inserts: string[];
   sections: Record<string, unknown>;
-  option_pips: Record<string, Record<string, number>>;
-  gear: { load: number; items: GearItem[] };
+  option_tracks: Record<string, Record<string, TrackState>>;
+  option_text: Record<string, Record<string, string>>;
+  sub_choices: Record<string, Record<string, string[]>>;
+  gear: { items: GearItem[] };
   followers: Follower[]; arcana: ArcanumInstance[]; custom_moves: Move[];
   notes: string; gm_notes?: string; creation_done: boolean;
 }
 export interface CharacterRow { id: string; owner: string | null; revision: number; updated_at: number; data: CharacterDoc }
 export interface SharedDoc {
   pack_id: string; template: string; name: string; stats: Record<string, number>; size: string; debilities: Record<string, boolean>;
-  sections: Record<string, unknown>; option_pips: Record<string, Record<string, number>>;
-  moves: { pips: Record<string, number>; hold: Record<string, number> };
+  sections: Record<string, unknown>; option_tracks: Record<string, Record<string, TrackState>>;
+  option_text: Record<string, Record<string, string>>; sub_choices: Record<string, Record<string, string[]>>;
+  moves: { tracks: Record<string, TrackState>; hold: Record<string, number>; options: Record<string, string[]> };
   notes: string; gm_notes?: string;
 }
 export interface SharedRow { id: string; template: string; revision: number; created_at: number; updated_at: number; data: SharedDoc }

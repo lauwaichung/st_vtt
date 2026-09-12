@@ -189,6 +189,22 @@ class Database:
         out.reverse()
         return out
 
+    def get_message(self, mid: int) -> dict[str, Any] | None:
+        with self._lock:
+            r = self._conn.execute("SELECT * FROM messages WHERE id=?", (mid,)).fetchone()
+        if r is None:
+            return None
+        return {
+            "id": r["id"], "ts": r["ts"], "author": r["author"], "kind": r["kind"],
+            "payload": json.loads(r["payload"]),
+            "visibility": json.loads(r["visibility"]) if r["visibility"] else None,
+        }
+
+    def update_message(self, mid: int, payload: dict[str, Any]) -> None:
+        with self._lock:
+            self._conn.execute("UPDATE messages SET payload=? WHERE id=?", (json.dumps(payload), mid))
+            self._conn.commit()
+
     def clear_messages(self) -> None:
         with self._lock:
             self._conn.execute("DELETE FROM messages")

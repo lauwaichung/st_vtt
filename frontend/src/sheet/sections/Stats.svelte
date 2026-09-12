@@ -24,7 +24,7 @@
 
 <div class="stats">
   {#each content.pack.stats as s}
-    {@const affected = content.pack.debilities.filter((d) => doc.debilities?.[d.id] && d.affects.includes(s.id))}
+    {@const affected = content.pack.debilities.filter((d) => doc.debilities[d.id] && d.affects.includes(s.id))}
     <div class="stat" class:dis={affected.length > 0} title={affected.length ? `Disadvantage: ${affected.map((d) => d.label).join(', ')}` : ''}>
       <div class="lbl">{s.label}</div>
       {#if editable}
@@ -63,7 +63,7 @@
 <div class="row debils">
   {#each content.pack.debilities as d}
     <label class="deb" title={d.text}>
-      <input type="checkbox" checked={!!doc.debilities?.[d.id]} disabled={!editable} use:presence={pres(`/debilities/${d.id}`)} onchange={(e) => p(`/debilities/${d.id}`, (e.target as HTMLInputElement).checked)} />
+      <input type="checkbox" checked={doc.debilities[d.id]} disabled={!editable} use:presence={pres(`/debilities/${d.id}`)} onchange={(e) => p(`/debilities/${d.id}`, (e.target as HTMLInputElement).checked)} />
       {d.label}
     </label>
   {/each}

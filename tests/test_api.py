@@ -4,6 +4,7 @@ import anyio
 import pytest
 from fastapi.testclient import TestClient
 
+from conftest import ROOT
 from st_vtt.main import create_app
 
 
@@ -73,7 +74,9 @@ def test_character_lifecycle_and_perms(gm, alice, bob):
     assert r.status_code == 200, r.text
     cid = r.json()["id"]
     assert r.json()["owner"] == "Alice"
-    assert r.json()["data"]["moves"]["taken"] == ["well_traveled"]
+    # the playbook's starting move, plus the fixed move from the insert it carries
+    assert r.json()["data"]["moves"]["taken"] == ["well_traveled", "stubborn"]
+    assert r.json()["data"]["inserts"] == ["gear", "followers", "arcana", "pack_mule"]
     assert r.json()["data"]["hp"] == {"current": 18, "max": 18}
 
     # players cannot assign owners; gm can
@@ -369,3 +372,171 @@ def test_multiple_sessions_when_disabled(config):
     a2 = client_for(app, "Alice")
     assert a1.get("/api/me").json()["name"] == "Alice" and a2.get("/api/me").json()["name"] == "Alice"
     app.state.db.close()
+
+
+def test_shared_sheet_stat_rolls(gm, alice):
+    """A shared-sheet move can roll one of that sheet's own stats."""
+    sid = sheet_id(gm)
+    assert gm.post(f"/api/shared/{sid}/patch", json={"path": "/stats/walls", "value": 2}).status_code == 200
+    r = alice.post("/api/roll", json={"shared_id": sid, "move_id": "muster", "stat": "walls"})
+    assert r.status_code == 200, r.text
+    p = alice.get("/api/messages").json()[-1]["payload"]
+    assert p["stat"] == "walls" and p["stat_label"] == "Walls" and p["stat_mod"] == 2
+    assert p["shared_id"] == sid and p["character_id"] is None
+    assert p["total"] == p["roll"]["total"] + 2
+
+    # character stats are not in scope for a shared sheet, and vice versa
+    assert alice.post("/api/roll", json={"shared_id": sid, "stat": "str"}).status_code == 400
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Bryn"}).json()["id"]
+    assert alice.post("/api/roll", json={"character_id": cid, "stat": "walls"}).status_code == 400
+    assert alice.post("/api/roll", json={"character_id": cid, "shared_id": sid}).status_code == 400
+
+    # a marked character debility must not bleed into a shared-sheet roll
+    alice.post(f"/api/characters/{cid}/patch", json={"path": "/debilities/battered", "value": True})
+    alice.post("/api/roll", json={"shared_id": sid, "stat": "walls"})
+    p = alice.get("/api/messages").json()[-1]["payload"]
+    assert p["mode"] == "normal" and p["auto_disadvantage"] == []
+
+    # gm-only sheets are not rollable by players
+    gsid = gm.post("/api/shared", json={"template": "gm_screen"}).json()["id"]
+    assert alice.post("/api/roll", json={"shared_id": gsid}).status_code == 404
+    assert gm.post("/api/roll", json={"shared_id": gsid}).status_code == 200
+
+
+def test_roll_modifiers_and_bonus_bounds(alice):
+    sid = sheet_id(alice)
+    # the example pack's Muster move declares no modifiers
+    assert alice.post("/api/roll", json={"shared_id": sid, "move_id": "muster", "modifiers": {"value": 1}}).status_code == 400
+    # free-form bonus is clamped to a sane range
+    assert alice.post("/api/roll", json={"shared_id": sid, "bonus": 3}).status_code == 200
+    assert alice.get("/api/messages").json()[-1]["payload"]["bonus"] == 3
+    assert alice.post("/api/roll", json={"shared_id": sid, "bonus": 99}).status_code == 400
+    assert alice.post("/api/roll", json={"shared_id": sid, "bonus": -99}).status_code == 400
+
+
+def test_declared_modifier_options(config):
+    """A move's `modifiers` give the dialog a bounded picker instead of free text."""
+    import json as _json
+    import shutil
+
+    src = ROOT / "content" / "example"
+    tmp = config.database_path.parent / "pack"
+    shutil.copytree(src, tmp)
+    sheets = _json.loads((tmp / "shared_sheets.json").read_text())
+    muster = next(m for m in sheets["shared_sheets"][0]["moves"] if m["id"] == "muster")
+    muster["roll"]["modifiers"] = [{
+        "id": "value", "label": "Item Value", "default": 0,
+        "options": [{"label": f"Value {v}", "value": -v} for v in range(4)],
+    }]
+    (tmp / "shared_sheets.json").write_text(_json.dumps(sheets))
+    config.content_pack = str(tmp)
+    app = create_app(config)
+    c = client_for(app, "Alice")
+    sid = sheet_id(c)
+    content_move = next(m for m in c.get("/api/content").json()["shared_sheets"][0]["moves"] if m["id"] == "muster")
+    assert [o["label"] for o in content_move["roll"]["modifiers"][0]["options"]] == ["Value 0", "Value 1", "Value 2", "Value 3"]
+
+    assert c.post("/api/roll", json={"shared_id": sid, "move_id": "muster", "modifiers": {"value": -2}}).status_code == 200
+    p = c.get("/api/messages").json()[-1]["payload"]
+    assert p["modifiers"] == [{"id": "value", "label": "Item Value", "option": "Value 2", "value": -2}]
+    assert p["bonus"] == -2
+    # omitting a declared modifier applies its default
+    c.post("/api/roll", json={"shared_id": sid, "move_id": "muster"})
+    p = c.get("/api/messages").json()[-1]["payload"]
+    assert p["modifiers"][0]["option"] == "Value 0" and p["bonus"] == 0
+    # a value outside the declared options is refused
+    assert c.post("/api/roll", json={"shared_id": sid, "move_id": "muster", "modifiers": {"value": -9}}).status_code == 400
+    app.state.db.close()
+
+
+def _roll_until(client, cid, move_id, tier, tries=40):
+    """Roll a move until it lands on `tier`; returns the chat message."""
+    for _ in range(tries):
+        client.post("/api/roll", json={"character_id": cid, "move_id": move_id})
+        msg = client.get("/api/messages").json()[-1]
+        if msg["payload"]["tier"] == tier:
+            return msg
+    raise AssertionError(f"never rolled {tier}")
+
+
+def test_roll_card_applies_its_outcome(alice):
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Bryn"}).json()["id"]
+    msg = _roll_until(alice, cid, "trailsense", "10+")
+    # the pack's authored action, plus nothing else on a hit
+    assert [a["kind"] for a in msg["payload"]["actions"]] == ["hold"]
+    assert msg["payload"]["actions"][0]["label"] == "Hold 2 Focus"
+
+    r = alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 0})
+    assert r.status_code == 200, r.text
+    doc = alice.get(f"/api/characters/{cid}").json()["data"]
+    assert doc["moves"]["hold"]["Focus"] == 2
+
+    card = [m for m in alice.get("/api/messages").json() if m["id"] == msg["id"]][0]
+    assert card["payload"]["applied"]["0"] == {"by": "Alice", "detail": "+2 Focus"}
+    # applying twice is refused
+    again = alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 0})
+    assert again.status_code == 400 and "already applied" in again.json()["detail"]
+
+
+def test_marking_xp_needs_no_authoring(alice):
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Bryn"}).json()["id"]
+    msg = _roll_until(alice, cid, "sharp_tongue", "6-")
+    assert msg["payload"]["actions"][0] == {"kind": "xp", "n": 1, "label": "Mark XP"}
+    alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 0})
+    assert alice.get(f"/api/characters/{cid}").json()["data"]["xp"] == 1
+
+
+def test_hp_and_debility_outcomes(alice):
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Bryn"}).json()["id"]
+    msg = _roll_until(alice, cid, "trailsense", "6-")
+    kinds = [a["kind"] for a in msg["payload"]["actions"]]
+    assert kinds == ["xp", "hp", "debility"]
+
+    alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 1})
+    doc = alice.get(f"/api/characters/{cid}").json()["data"]
+    assert 14 <= doc["hp"]["current"] < 18, "1d4 damage came off the top"
+
+    # "mark a debility" leaves the choice to the player
+    blank = alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 2})
+    assert blank.status_code == 400 and "pick a debility" in blank.json()["detail"]
+    assert alice.post(f"/api/messages/{msg['id']}/apply", json={"index": 2, "choice": "rattled"}).status_code == 200
+    assert alice.get(f"/api/characters/{cid}").json()["data"]["debilities"]["rattled"] is True
+
+
+def test_only_someone_who_may_edit_the_sheet_can_apply(gm, alice, bob):
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Bryn"}).json()["id"]
+    msg = _roll_until(alice, cid, "sharp_tongue", "6-")
+    denied = bob.post(f"/api/messages/{msg['id']}/apply", json={"index": 0})
+    assert denied.status_code == 403
+    assert gm.post(f"/api/messages/{msg['id']}/apply", json={"index": 0}).status_code == 200
+
+
+def test_shared_sheet_outcomes_touch_the_shared_sheet(gm):
+    sid = sheet_id(gm)
+    gm.post(f"/api/shared/{sid}/patch", json={"path": "/stats/luck", "value": 2})
+    for _ in range(40):
+        gm.post("/api/roll", json={"shared_id": sid, "move_id": "muster"})
+        msg = gm.get("/api/messages").json()[-1]
+        if msg["payload"]["tier"] == "6-":
+            break
+    else:
+        raise AssertionError("never rolled 6-")
+    stat = next(a for a in msg["payload"]["actions"] if a["kind"] == "stat")
+    index = msg["payload"]["actions"].index(stat)
+    assert gm.post(f"/api/messages/{msg['id']}/apply", json={"index": index}).status_code == 200
+    assert gm.get("/api/shared").json()[0]["data"]["stats"]["luck"] == 1
+
+
+def test_a_moves_own_checklist_is_stored_like_a_sections(alice):
+    cid = alice.post("/api/characters", json={"playbook": "wanderer", "name": "Pedr"}).json()["id"]
+    # Hardened is "each time you take this move, pick 1", with a write-in on one option.
+    assert alice.post(f"/api/characters/{cid}/patch",
+                      json={"path": "/moves/taken", "value": "hardened", "op": "list_add"}).status_code == 200
+    assert alice.post(f"/api/characters/{cid}/patch",
+                      json={"path": "/moves/options/hardened", "value": ["hardened_knack"]}).status_code == 200
+    assert alice.post(f"/api/characters/{cid}/patch",
+                      json={"path": "/option_text/hardened/hardened_knack", "value": "shoeing horses"}).status_code == 200
+
+    doc = alice.get(f"/api/characters/{cid}").json()["data"]
+    assert doc["moves"]["options"]["hardened"] == ["hardened_knack"]
+    assert doc["option_text"]["hardened"]["hardened_knack"] == "shoeing horses"

@@ -36,6 +36,7 @@ def main(argv: list[str] | None = None) -> int:
             pack = load_content(path)
             print(f"OK: {pack.pack.name} ({pack.pack.id})")
             print(f"  playbooks: {', '.join(p.id for p in pack.playbooks) or '-'}")
+            print(f"  inserts: {', '.join(i.id for i in pack.inserts) or '-'}")
             print(f"  moves: {len(pack.all_moves())}  arcana: {len(pack.arcana)}  shared sheets: {', '.join(t.id for t in pack.shared_sheets) or '-'}")
             return 0
         if cmd == "schema":

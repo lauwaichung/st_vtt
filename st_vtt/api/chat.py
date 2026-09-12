@@ -22,11 +22,13 @@ class RollBody(BaseModel):
     expr: str | None = None
     label: str | None = None
     character_id: str | None = None
+    shared_id: str | None = None
     move_id: str | None = None
     stat: str | None = None
     advantage: bool = False
     disadvantage: bool = False
     bonus: int = 0
+    modifiers: dict[str, int] | None = None
     gm_only: bool = False
 
 
@@ -39,6 +41,11 @@ class RequestRollBody(BaseModel):
     user: str
     label: str = ""
     stat: str | None = None
+
+
+class ApplyBody(BaseModel):
+    index: int
+    choice: str | None = None
 
 
 @router.get("/messages")
@@ -61,6 +68,16 @@ async def post_chat(body: ChatBody, request: Request, user: UserConfig = Depends
 async def post_roll(body: RollBody, request: Request, user: UserConfig = Depends(current_user)) -> dict:
     try:
         renders = service.do_roll(request.app, user, body.model_dump())
+    except service.ServiceError as e:
+        raise http(e) from e
+    await emit(request, renders)
+    return {"ok": True}
+
+
+@router.post("/messages/{mid}/apply")
+async def apply_outcome(mid: int, body: ApplyBody, request: Request, user: UserConfig = Depends(current_user)) -> dict:
+    try:
+        renders = service.apply_outcome(request.app, user, mid, body.index, body.choice)
     except service.ServiceError as e:
         raise http(e) from e
     await emit(request, renders)

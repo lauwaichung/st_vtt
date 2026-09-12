@@ -100,6 +100,11 @@ function handle(ev: any): void {
       app.messages = [...app.messages.slice(-499), m];
       break;
     }
+    case 'message_updated': {
+      const m = ev.message as Message;
+      app.messages = app.messages.map((old) => (old.id === m.id ? m : old));
+      break;
+    }
     case 'chat_cleared':
       app.messages = [];
       break;

@@ -145,7 +145,31 @@ any special engine feature.
 - **Followers**, **arcana**, and **gear** live in their own sections when the
   playbook enables those inserts. Arcana can be added from the pack's library or
   written on the spot. Options with uses (a healer's kit, say) show ◇ pips.
+- **Inserts** are the half-sheets a playbook comes with (a warband, a book of
+  spells) plus any the pack defines for later — the ones you gain by dying badly,
+  say. Each brings its own sections and moves; a playbook, a choice, or a move can
+  hand you one, and you can add or drop them yourself.
+- A choice can open a **sub-choice** when you pick it (choose up to three
+  weapons, each with its own boxes) and can reveal a **write-in box** for the
+  "or make something up" options. **Lines** are the "choose 1 on each line"
+  blocks: one row of options each, with room to write your own.
+- **Boxes mean what their shape says**, as in the book: a ◇ diamond is one box of
+  carried load and counts towards your load; a ○ circle is a use or a named ammo
+  status (*low ammo*, *all out*) marked left to right; a □ square is a plain tick.
+- **Roll cards apply their own outcomes.** Mark XP, lose 1d4 HP, hold 3 of a move's
+  currency, mark a debility, drop a shared sheet's stat — each is a button on the
+  card in chat, for whoever may edit that sheet. Clicking it patches the sheet, rolls
+  any dice involved, and records on the card who applied it; each one applies once.
+- Some moves let you **take a move from another playbook**; while you hold an
+  unspent pick the move picker offers those under "From other playbooks".
+- **A move can carry its own checklist** — "each time you take this move, pick 1".
+  The list sits on the move's card with boxes and write-ins of its own, and what
+  you tick stays ticked.
 - Table columns of type `dice` (an NPC's damage, for example) have a Roll button.
+- **Shared-sheet moves roll that sheet's own stats.** A village move that rolls
+  +Walls reads the value off the sheet, so there is nothing to type. Where a
+  move needs a player choice, the pack can declare a dropdown of allowed values
+  (an item's Value, say) instead of a free-form number.
 - **GM tools** (header button): ask a player to roll something, create shared
   sheets, export the whole campaign, clear the chat.
 

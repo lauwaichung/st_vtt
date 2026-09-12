@@ -2,6 +2,8 @@ import type { Move } from './types';
 
 export interface RollRequest {
   characterId: string | null;
+  /** set instead of characterId when the move belongs to a shared sheet */
+  sharedId?: string | null;
   move: Move | null;
   stat?: string | null;
   label?: string;

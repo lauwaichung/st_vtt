@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import copy
 import uuid
 from typing import Any
 
-from .content import ContentPack, Playbook, SharedSheetDef, level_up_cost
+from .content import ContentPack, Playbook, Section, SharedSheetDef, level_up_cost
 
 
 def new_id() -> str:
@@ -28,12 +29,16 @@ def new_character(pack: ContentPack, playbook: Playbook, name: str) -> dict[str,
         "debilities": {d.id: False for d in pack.pack.debilities},
         "moves": {
             "taken": list(playbook.starting_moves.fixed),
-            "pips": {},
+            "tracks": {},
             "hold": {},
+            "options": {},
         },
+        "inserts": list(playbook.inserts),
         "sections": {},
-        "option_pips": {},
-        "gear": {"load": 0, "items": []},
+        "option_tracks": {},
+        "option_text": {},
+        "sub_choices": {},
+        "gear": {"items": []},
         "followers": [],
         "arcana": [],
         "custom_moves": [],
@@ -41,12 +46,21 @@ def new_character(pack: ContentPack, playbook: Playbook, name: str) -> dict[str,
         "gm_notes": "",
         "creation_done": False,
     }
-    for sec in playbook.sections:
-        doc["sections"][sec.id] = default_section_value(sec.type)
+    for iid in playbook.inserts:
+        ins = pack.insert(iid)
+        if ins:
+            doc["moves"]["taken"].extend(m for m in ins.starting_moves.fixed if m not in doc["moves"]["taken"])
+    for sec in pack.sections_for(playbook.id):
+        doc["sections"][sec.id] = default_section_value(sec)
     return doc
 
 
-def default_section_value(kind: str) -> Any:
+def default_section_value(sec: Section) -> Any:
+    """The value a freshly created sheet gets for `sec`: its `start`, else empty for its type."""
+    if sec.start is not None:
+        return copy.deepcopy(sec.start)
+    if sec.type == "lines":
+        return {line.id: None for line in sec.lines}
     return {
         "choose": None,
         "multichoose": [],
@@ -54,8 +68,8 @@ def default_section_value(kind: str) -> Any:
         "pips": 0,
         "text": "",
         "table": [],
-        "names": "",
-    }[kind]
+        "names": {"origin": "", "name": ""},
+    }[sec.type]
 
 
 def new_shared_sheet(pack: ContentPack, tpl: SharedSheetDef, name: str | None = None) -> dict[str, Any]:
@@ -66,9 +80,11 @@ def new_shared_sheet(pack: ContentPack, tpl: SharedSheetDef, name: str | None = 
         "stats": {s.id: s.start for s in tpl.stats},
         "size": tpl.size_start or (tpl.sizes[0] if tpl.sizes else ""),
         "debilities": {d.id: False for d in tpl.debilities},
-        "sections": {sec.id: default_section_value(sec.type) for sec in tpl.sections},
-        "option_pips": {},
-        "moves": {"pips": {}, "hold": {}},
+        "sections": {sec.id: default_section_value(sec) for sec in tpl.sections},
+        "option_tracks": {},
+        "option_text": {},
+        "sub_choices": {},
+        "moves": {"tracks": {}, "hold": {}, "options": {}},
         "notes": "",
         "gm_notes": "",
     }

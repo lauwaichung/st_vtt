@@ -13,6 +13,7 @@ from typing import Any, Callable
 from fastapi import FastAPI
 
 from . import characters as chars
+from . import dice
 from . import rolls
 from .config import UserConfig
 from .content import ContentPack
@@ -303,31 +304,50 @@ def post_chat(app: FastAPI, user: UserConfig, text: str, to: list[str] | None = 
 
 
 def do_roll(app: FastAPI, user: UserConfig, spec: dict[str, Any]) -> list[Render]:
-    """spec: {expr, label} or {character_id, move_id?, stat?, advantage?, disadvantage?, bonus?, label?}; plus gm_only."""
+    """Roll dice or a move.
+
+    spec: {expr, label} or {character_id | shared_id, move_id?, stat?, advantage?,
+    disadvantage?, bonus?, modifiers?, label?}; plus gm_only. A `shared_id` rolls
+    against that shared sheet's own stats (Defenses, Population, ...).
+    """
     pack = pack_of(app)
     doc = None
+    stat_source: dict[str, str] | None = None
     cid = spec.get("character_id")
+    sid = spec.get("shared_id")
+    if cid and sid:
+        raise ServiceError("roll against a character or a shared sheet, not both")
     if cid:
         row = db_of(app).get_character(cid)
         if row is None:
             raise ServiceError("no such character", 404)
         doc = row["data"]
+    elif sid:
+        row = db_of(app).get_shared(sid)
+        if row is None or not shared_visible(app, user, row):
+            raise ServiceError("no such shared sheet", 404)
+        doc = row["data"]
+        tpl = shared_template(app, row)
+        stat_source = {st.id: st.label for st in tpl.stats} if tpl else {}
     try:
         if spec.get("expr"):
-            payload = rolls.roll_expr(pack, str(spec["expr"]), doc, label=spec.get("label"))
+            payload = rolls.roll_expr(pack, str(spec["expr"]), doc if cid else None, label=spec.get("label"))
         else:
             move = None
             if spec.get("move_id"):
-                move = pack.find_move(str(spec["move_id"]), doc.get("playbook") if doc else None)
-                if move is None and doc:
+                move = pack.find_move(str(spec["move_id"]), doc.get("playbook") if cid and doc else None)
+                if move is None and cid and doc:
                     move = _custom_move(pack, doc, str(spec["move_id"]))
                 if move is None:
                     raise ServiceError(f"unknown move {spec['move_id']!r}")
             stat = spec.get("stat")
-            if stat is not None and stat not in pack.stat_ids():
+            known = set(stat_source) if stat_source is not None else set(pack.stat_ids())
+            if stat is not None and stat not in known:
                 raise ServiceError(f"unknown stat {stat!r}")
             if move and move.roll and stat is None and isinstance(move.roll.stat, str) and move.roll.stat != "choose":
                 stat = move.roll.stat
+                if stat not in known:
+                    raise ServiceError(f"move {move.id!r} rolls +{stat}, which this sheet does not have")
             payload = rolls.roll_move(
                 pack,
                 doc=doc,
@@ -335,20 +355,139 @@ def do_roll(app: FastAPI, user: UserConfig, spec: dict[str, Any]) -> list[Render
                 stat=stat,
                 advantage=bool(spec.get("advantage")),
                 disadvantage=bool(spec.get("disadvantage")),
-                bonus=int(spec.get("bonus") or 0),
+                bonus=_clamp_bonus(spec.get("bonus")),
                 label=spec.get("label"),
+                stat_source=stat_source,
+                modifiers=_chosen_modifiers(move, spec.get("modifiers")),
             )
     except DiceError as e:
         raise ServiceError(f"bad dice expression: {e}") from e
     payload["character_id"] = cid
+    payload["shared_id"] = sid
     vis = sorted(set([user.name, *gm_names(app)])) if spec.get("gm_only") else None
     payload["gm_only"] = bool(spec.get("gm_only"))
     msg = db_of(app).add_message(user.name, "roll", payload, vis)
     return [_message_render(msg)]
 
 
+def apply_outcome(app: FastAPI, user: UserConfig, message_id: int, index: int, choice: str | None = None) -> list[Render]:
+    """Apply one of a roll card's outcomes to the sheet it was rolled for.
+
+    The change goes through `patch_entity`, so it is permission-checked and broadcast exactly
+    like a manual edit. Each action can be applied once; the card remembers who did it.
+    """
+    db = db_of(app)
+    msg = db.get_message(message_id)
+    if msg is None or msg["kind"] != "roll":
+        raise ServiceError("no such roll", 404)
+    payload = msg["payload"]
+    actions = payload.get("actions") or []
+    if not 0 <= index < len(actions):
+        raise ServiceError("no such outcome")
+    applied = payload.setdefault("applied", {})
+    if str(index) in applied:
+        raise ServiceError(f"already applied by {applied[str(index)]['by']}")
+    cid, sid = payload.get("character_id"), payload.get("shared_id")
+    entity, eid = ("character", cid) if cid else ("shared", sid)
+    if not eid:
+        raise ServiceError("this roll is not tied to a sheet")
+    row = db.get_character(eid) if entity == "character" else db.get_shared(eid)
+    if row is None:
+        raise ServiceError("that sheet is gone", 404)
+
+    path, value, detail = _resolve_action(app, actions[index], row["data"], entity, choice)
+    renders = patch_entity(app, user, entity, eid, path, value)
+    applied[str(index)] = {"by": user.name, "detail": detail}
+    db.update_message(message_id, payload)
+    msg["payload"] = payload
+    return [*renders, _message_update_render(msg)]
+
+
+def _message_update_render(msg: dict[str, Any]) -> Render:
+    def render(u: UserConfig) -> dict[str, Any] | None:
+        return {"type": "message_updated", "message": msg} if visible_to(u, msg.get("visibility")) else None
+
+    return render
+
+
+def _resolve_action(app: FastAPI, action: dict[str, Any], doc: dict[str, Any], entity: str, choice: str | None) -> tuple[str, Any, str]:
+    """Turn one outcome action into a patch: (path, value, what to show on the card)."""
+    pack = pack_of(app)
+    kind = action.get("kind")
+    if kind == "xp":
+        n = int(action.get("n", 1))
+        return "/xp", int(doc.get("xp", 0)) + n, f"+{n} XP"
+    if kind == "hp":
+        try:
+            rolled = dice.roll(str(action["amount"]))
+        except DiceError as e:
+            raise ServiceError(f"bad hp amount: {e}") from e
+        hp = doc.get("hp") or {}
+        current, top = int(hp.get("current", 0)), int(hp.get("max", 0))
+        new = max(0, min(current + rolled.total, top))
+        return "/hp/current", new, f"{rolled.total:+d} HP ({current} → {new})"
+    if kind == "hold":
+        name = str(action["name"])
+        n = int(action.get("n", 1))
+        held = int(doc["moves"]["hold"].get(name, 0))
+        return f"/moves/hold/{name}", held + n, f"+{n} {name}"
+    if kind == "debility":
+        did = action.get("id") or choice
+        known = {d.id for d in pack.pack.debilities}
+        if did not in known:
+            raise ServiceError(f"pick a debility to mark ({', '.join(sorted(known))})")
+        return f"/debilities/{did}", True, f"marked {did}"
+    if kind == "stat":
+        sid = str(action["id"])
+        tpl = pack.shared_sheet(doc.get("template", ""))
+        stat = next((s for s in (tpl.stats if tpl else []) if s.id == sid), None)
+        if stat is None:
+            raise ServiceError(f"unknown stat {sid!r} on this sheet")
+        new = max(stat.min, min(int(doc.get("stats", {}).get(sid, 0)) + int(action["delta"]), stat.max))
+        return f"/stats/{sid}", new, f"{sid} → {new:+d}"
+    if kind == "sheet_debility":
+        return f"/debilities/{action['id']}", True, f"marked {action['id']}"
+    raise ServiceError(f"unknown outcome action {kind!r}")
+
+
+def _clamp_bonus(raw: Any) -> int:
+    """A free-form bonus from a client, kept inside sane bounds."""
+    try:
+        value = int(raw or 0)
+    except (TypeError, ValueError):
+        raise ServiceError("bonus must be a whole number") from None
+    if not rolls.MIN_BONUS <= value <= rolls.MAX_BONUS:
+        raise ServiceError(f"bonus must be between {rolls.MIN_BONUS} and {rolls.MAX_BONUS}")
+    return value
+
+
+def _chosen_modifiers(move: Move | None, raw: Any) -> list[dict[str, Any]]:
+    """Resolve {modifier id: chosen value} against the move's declared options."""
+    declared = {m.id: m for m in (move.roll.modifiers if move and move.roll else [])}
+    chosen: list[dict[str, Any]] = []
+    if raw is None:
+        picks: dict[str, Any] = {}
+    elif isinstance(raw, dict):
+        picks = raw
+    else:
+        raise ServiceError("modifiers must be an object of {id: value}")
+    for mid, value in picks.items():
+        mod = declared.get(str(mid))
+        if mod is None:
+            raise ServiceError(f"unknown modifier {mid!r} for this move")
+        option = next((o for o in mod.options if o.value == value), None)
+        if option is None:
+            raise ServiceError(f"{mod.label}: {value!r} is not one of its options")
+        chosen.append({"id": mod.id, "label": mod.label, "option": option.label, "value": option.value})
+    for mod in declared.values():
+        if mod.id not in picks:
+            option = next(o for o in mod.options if o.value == mod.default)
+            chosen.append({"id": mod.id, "label": mod.label, "option": option.label, "value": option.value})
+    return chosen
+
+
 def _custom_move(pack: ContentPack, doc: dict[str, Any], move_id: str) -> Move | None:
-    for raw in doc.get("custom_moves") or []:
+    for raw in doc["custom_moves"]:
         if isinstance(raw, dict) and raw.get("id") == move_id:
             try:
                 return Move.model_validate(raw)
@@ -376,7 +515,7 @@ def share_move(app: FastAPI, user: UserConfig, character_id: str | None, move_id
         "name": move.name,
         "trigger": move.trigger,
         "text": move.text,
-        "outcomes": move.outcomes,
+        "outcomes": {tier: o.text for tier, o in move.outcomes.items()},
         "hold": move.hold.model_dump() if move.hold else None,
         "roll": move.roll.model_dump() if move.roll else None,
         "character": doc.get("name") if doc else None,

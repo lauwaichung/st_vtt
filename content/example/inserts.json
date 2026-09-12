@@ -1,0 +1,38 @@
+{
+  "inserts": [
+    {
+      "id": "pack_mule",
+      "name": "Pack Mule",
+      "kind": "playbook",
+      "blurb": "A stubborn animal that carries what you cannot.",
+      "description": "An insert is a half-sheet: its own sections and moves, added to the sheet when you take it. Treat the mule as a follower.",
+      "starting_moves": {"fixed": ["stubborn"]},
+      "sections": [
+        {
+          "id": "mule_temper",
+          "title": "Temperament",
+          "type": "choose",
+          "help": "Pick 1.",
+          "options": [
+            {"id": "mule_placid", "label": "Placid", "text": "Nothing much bothers it."},
+            {"id": "mule_ornery", "label": "Ornery", "text": "It bites. Mark a box each time it does.", "tracks": {"uses": 2}}
+          ]
+        }
+      ],
+      "moves": [
+        {
+          "id": "stubborn",
+          "name": "Stubborn",
+          "trigger": "When you try to make the mule do something it would rather not...",
+          "text": "...roll +CHA.",
+          "roll": {"stat": "cha"},
+          "outcomes": {
+            "10+": "It does it.",
+            "7-9": "It does it, slowly and loudly.",
+            "6-": "It does not, and everyone hears about it."
+          }
+        }
+      ]
+    }
+  ]
+}

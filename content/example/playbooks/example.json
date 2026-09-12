@@ -5,7 +5,7 @@
   "hp_max": 18,
   "damage_die": "1d8",
   "armor": 0,
-  "inserts": ["gear", "followers", "arcana"],
+  "inserts": ["gear", "followers", "arcana", "pack_mule"],
   "hold_names": ["Focus"],
   "sections": [
     {
@@ -31,14 +31,19 @@
     {
       "id": "appearance",
       "title": "Appearance",
-      "type": "multichoose",
-      "help": "Pick as many as fit.",
-      "min": 1,
-      "options": [
-        {"id": "weathered", "label": "weathered"},
-        {"id": "sharp_eyed", "label": "sharp-eyed"},
-        {"id": "quiet", "label": "quiet"},
-        {"id": "smiling", "label": "always smiling"}
+      "type": "lines",
+      "help": "Choose 1 on each line, or make something up.",
+      "lines": [
+        {"id": "age", "write_in": "or make something up", "options": [
+          {"id": "young", "label": "young"},
+          {"id": "seasoned", "label": "seasoned"},
+          {"id": "weathered", "label": "weathered"}
+        ]},
+        {"id": "manner", "write_in": "or make something up", "options": [
+          {"id": "sharp_eyed", "label": "sharp-eyed"},
+          {"id": "quiet", "label": "quiet"},
+          {"id": "smiling", "label": "always smiling"}
+        ]}
       ]
     },
     {
@@ -60,9 +65,9 @@
       "max": 2,
       "options": [
         {"id": "map", "label": "A worn map", "text": "Advantage to Recall Lore about routes."},
-        {"id": "lantern", "label": "A storm lantern", "text": "Never goes out in wind or rain."},
+        {"id": "lantern", "label": "A storm lantern", "text": "Never goes out in wind or rain.", "tracks": {"bulk": 1, "uses": 5}},
         {"id": "dog", "label": "A loyal dog", "text": "Add it as a follower."},
-        {"id": "kit", "label": "Healer's kit", "text": "Bandages and salves.", "pips": 3}
+        {"id": "kit", "label": "Healer's kit", "text": "Bandages and salves.", "tracks": {"bulk": 1, "uses": 3}}
       ]
     },
     {
@@ -75,6 +80,24 @@
         {"id": "far", "label": "I have been farther than anyone else here."},
         {"id": "lost", "label": "I lost someone on the road."},
         {"id": "owed", "label": "Someone in the village owes me."}
+      ]
+    },
+    {
+      "id": "introductions",
+      "title": "Introductions",
+      "type": "multichoose",
+      "help": "A note is prose with no checkbox; only the questions hanging off one are picks.",
+      "required": false,
+      "options": [
+        {"id": "intro_1", "label": "1. Introduce yourself", "note": true,
+         "text": "Name, background, appearance — all of it is elsewhere on this sheet."},
+        {"id": "intro_2", "label": "2. Ask the others", "note": true, "min": 1, "max": 2,
+         "text": "Answer one of these, then go around again and answer another, or pass.",
+         "options": [
+           {"id": "intro_q_road", "label": "Which of you have I walked the road with?", "write_in": "your answer"},
+           {"id": "intro_q_debt", "label": "Which of you do I owe?", "write_in": "your answer"},
+           {"id": "intro_q_trust", "label": "Which of you do I not quite trust?", "write_in": "your answer"}
+         ]}
       ]
     },
     {
@@ -120,11 +143,14 @@
       "name": "Trailsense",
       "trigger": "When you lead the way through country you do not know...",
       "roll": {"stat": "wis"},
-      "outcomes": {
-        "10+": "You find the way, and hold 2 Focus.",
-        "7-9": "You find the way, and hold 1 Focus.",
-        "6-": "You are lost. Mark XP."
-      },
+        "outcomes": {
+   "10+": {"text": "You find the way, and hold 2 Focus.",
+           "apply": [{"kind": "hold", "name": "Focus", "n": 2}]},
+   "7-9": {"text": "You find the way, and hold 1 Focus.",
+           "apply": [{"kind": "hold", "name": "Focus", "n": 1}]},
+   "6-": {"text": "You are lost, and it costs you. Mark XP.",
+          "apply": [{"kind": "hp", "amount": "-1d4"}, {"kind": "debility"}]}
+  },
       "hold": {"name": "Focus", "note": "Spend 1 Focus to notice something before it notices you."}
     },
     {
@@ -139,13 +165,26 @@
       }
     },
     {"id": "watchful", "name": "Watchful", "text": "You always notice an ambush before it springs."},
-    {"id": "iron_gut", "name": "Iron Gut", "text": "You can eat anything. ◇◇◇ mark one each time you do; when full, clear and take +1 HP max.", "pips": 3},
+    {"id": "iron_gut", "name": "Iron Gut", "text": "You can eat anything. Mark one each time you do; when full, clear and take +1 HP max.", "tracks": {"uses": 3}},
     {
       "id": "second_wind",
       "name": "Second Wind",
       "text": "Once per session, regain 1d8 HP.",
       "requires": {"level": 2},
-      "pips": 1
+      "tracks": {"uses": 1}
+    },
+    {
+      "id": "hardened",
+      "name": "Hardened",
+      "text": "Each time you take this move, pick 1. What you pick stays on your sheet.",
+      "requires": {"level": 2},
+      "min": 1,
+      "max": 1,
+      "options": [
+        {"id": "hardened_cold", "label": "Cold and hunger no longer slow you"},
+        {"id": "hardened_ground", "label": "You sleep soundly on any ground"},
+        {"id": "hardened_knack", "label": "You picked up a knack on the road", "write_in": "the knack"}
+      ]
     },
     {
       "id": "tireless",

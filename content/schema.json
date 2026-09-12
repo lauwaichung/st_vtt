@@ -157,6 +157,39 @@
       "title": "Debility",
       "type": "object"
     },
+    "DebilityAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "debility",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Omit to let the player choose which one to mark.",
+          "title": "Id"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "DebilityAction",
+      "type": "object"
+    },
     "DicePreset": {
       "additionalProperties": false,
       "properties": {
@@ -185,6 +218,14 @@
             "type": "string"
           },
           "title": "Moves",
+          "type": "array"
+        },
+        "inserts": {
+          "description": "Insert ids the sheet gains while this option is selected.",
+          "items": {
+            "type": "string"
+          },
+          "title": "Inserts",
           "type": "array"
         },
         "armor": {
@@ -263,6 +304,37 @@
       "title": "FollowerRules",
       "type": "object"
     },
+    "Grant": {
+      "additionalProperties": false,
+      "description": "A move that lets you take moves from other playbooks (a \"multiclass\" move).",
+      "properties": {
+        "from_playbooks": {
+          "description": "Playbook ids; empty means any playbook but your own.",
+          "items": {
+            "type": "string"
+          },
+          "title": "From Playbooks",
+          "type": "array"
+        },
+        "n": {
+          "default": 1,
+          "description": "How many foreign moves this grant is worth.",
+          "minimum": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "exclude_tags": {
+          "description": "Move tags this grant cannot pick, e.g. ['stat', 'multiclass'].",
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclude Tags",
+          "type": "array"
+        }
+      },
+      "title": "Grant",
+      "type": "object"
+    },
     "Hold": {
       "additionalProperties": false,
       "properties": {
@@ -280,6 +352,165 @@
         "name"
       ],
       "title": "Hold",
+      "type": "object"
+    },
+    "HoldAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "hold",
+          "title": "Kind",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "n": {
+          "default": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "name"
+      ],
+      "title": "HoldAction",
+      "type": "object"
+    },
+    "HpAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "hp",
+          "title": "Kind",
+          "type": "string"
+        },
+        "amount": {
+          "description": "Signed number or dice, e.g. '-3' or '-1d4' or '+1d8'.",
+          "title": "Amount",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "amount"
+      ],
+      "title": "HpAction",
+      "type": "object"
+    },
+    "InsertDef": {
+      "additionalProperties": false,
+      "description": "A sheet insert: one of the half-sheets a game slips inside a playbook.\n\n`gear`, `followers` and `arcana` are built into the engine (the Inventory sheet and the\ngeneric follower sheet); everything else a pack wants \u2014 a warband, a spellbook, an animal\ncompanion, the ghost you become \u2014 is declared here. An insert is a small playbook:\nsections and moves that live on the sheet once it is taken.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "kind": {
+          "default": "playbook",
+          "description": "Free-form grouping, e.g. 'playbook' or 'fate'.",
+          "title": "Kind",
+          "type": "string"
+        },
+        "blurb": {
+          "default": "",
+          "title": "Blurb",
+          "type": "string"
+        },
+        "description": {
+          "default": "",
+          "description": "Markdown shown at the top of the insert.",
+          "title": "Description",
+          "type": "string"
+        },
+        "sections": {
+          "items": {
+            "$ref": "#/$defs/Section"
+          },
+          "title": "Sections",
+          "type": "array"
+        },
+        "moves": {
+          "items": {
+            "$ref": "#/$defs/Move"
+          },
+          "title": "Moves",
+          "type": "array"
+        },
+        "starting_moves": {
+          "$ref": "#/$defs/StartingMoves",
+          "description": "Moves gained with the insert; the rest are picked."
+        },
+        "hold_names": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Hold Names",
+          "type": "array"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "InsertDef",
+      "type": "object"
+    },
+    "Line": {
+      "additionalProperties": false,
+      "description": "One row of a `lines` section: a set of options you pick exactly one of.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/Option"
+          },
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "write_in": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Show a write-in box at the end of the row for the \"or make something up\" case. The value is the input's placeholder; use \"\" for none.",
+          "title": "Write In"
+        }
+      },
+      "required": [
+        "id"
+      ],
+      "title": "Line",
       "type": "object"
     },
     "LoadRules": {
@@ -302,6 +533,63 @@
         }
       },
       "title": "LoadRules",
+      "type": "object"
+    },
+    "Modifier": {
+      "additionalProperties": false,
+      "description": "A bounded, pack-declared choice the roll dialog offers instead of a free-form bonus.",
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/$defs/ModifierOption"
+          },
+          "minItems": 1,
+          "title": "Options",
+          "type": "array"
+        },
+        "default": {
+          "type": "integer",
+          "default": 0,
+          "title": "Default"
+        },
+        "help": {
+          "default": "",
+          "title": "Help",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "Modifier",
+      "type": "object"
+    },
+    "ModifierOption": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "ModifierOption",
       "type": "object"
     },
     "Move": {
@@ -339,9 +627,9 @@
         },
         "outcomes": {
           "additionalProperties": {
-            "type": "string"
+            "$ref": "#/$defs/Outcome"
           },
-          "description": "Tier label -> markdown.",
+          "description": "Tier label -> markdown, or {text, apply}.",
           "title": "Outcomes",
           "type": "object"
         },
@@ -356,19 +644,9 @@
           ],
           "default": null
         },
-        "pips": {
-          "anyOf": [
-            {
-              "maximum": 20,
-              "minimum": 1,
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "title": "Pips"
+        "tracks": {
+          "$ref": "#/$defs/Tracks",
+          "description": "Boxes tracked on the move itself."
         },
         "requires": {
           "anyOf": [
@@ -399,6 +677,65 @@
           ],
           "default": null,
           "title": "Replaces"
+        },
+        "insert": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Taking this move adds the named insert to the sheet.",
+          "title": "Insert"
+        },
+        "grants": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Grant"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Taking this move lets you pick moves from other playbooks."
+        },
+        "options": {
+          "description": "A checklist the move carries, e.g. \"each time you take this move, pick 1\". Picks are stored on the sheet under the move, and stay picked; a choice made at roll time belongs in `text`.",
+          "items": {
+            "$ref": "#/$defs/Option"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "options: minimum picks required.",
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "options: maximum picks allowed. 1 makes it a single choice.",
+          "title": "Max"
         }
       },
       "required": [
@@ -416,6 +753,7 @@
           "type": "string"
         },
         "names": {
+          "description": "May be empty for a 'pick a name from any list' entry.",
           "items": {
             "type": "string"
           },
@@ -424,8 +762,7 @@
         }
       },
       "required": [
-        "label",
-        "names"
+        "label"
       ],
       "title": "NameList",
       "type": "object"
@@ -457,11 +794,34 @@
           ],
           "default": null
         },
-        "pips": {
+        "tracks": {
+          "$ref": "#/$defs/Tracks",
+          "description": "Boxes tracked on the sheet while the option is selected."
+        },
+        "write_in": {
           "anyOf": [
             {
-              "maximum": 20,
-              "minimum": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Show a one-line write-in box when this option is selected. The value is the input's placeholder; use \"\" for none.",
+          "title": "Write In"
+        },
+        "options": {
+          "description": "A nested sub-choice, revealed only when this option is selected.",
+          "items": {
+            "$ref": "#/$defs/Option"
+          },
+          "title": "Options",
+          "type": "array"
+        },
+        "min": {
+          "anyOf": [
+            {
               "type": "integer"
             },
             {
@@ -469,8 +829,27 @@
             }
           ],
           "default": null,
-          "description": "Uses/charges tracked on the sheet while the option is selected.",
-          "title": "Pips"
+          "description": "Nested sub-choice: minimum picks required.",
+          "title": "Min"
+        },
+        "max": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Nested sub-choice: maximum picks allowed. 1 makes it a single choice.",
+          "title": "Max"
+        },
+        "note": {
+          "default": false,
+          "description": "Render as prose with no checkbox: a heading, an instruction, or (with tracks) a plain tracker. A note is never stored in the section's value and never applies effects; its nested options are always shown.",
+          "title": "Note",
+          "type": "boolean"
         }
       },
       "required": [
@@ -478,6 +857,70 @@
         "label"
       ],
       "title": "Option",
+      "type": "object"
+    },
+    "Outcome": {
+      "additionalProperties": false,
+      "description": "What a tier says, and optionally what it does.",
+      "properties": {
+        "text": {
+          "default": "",
+          "title": "Text",
+          "type": "string"
+        },
+        "apply": {
+          "description": "Offered as buttons on the roll card.",
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "debility": "#/$defs/DebilityAction",
+                "hold": "#/$defs/HoldAction",
+                "hp": "#/$defs/HpAction",
+                "sheet_debility": "#/$defs/SheetDebilityAction",
+                "stat": "#/$defs/StatAction",
+                "xp": "#/$defs/XpAction"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/XpAction"
+              },
+              {
+                "$ref": "#/$defs/HpAction"
+              },
+              {
+                "$ref": "#/$defs/HoldAction"
+              },
+              {
+                "$ref": "#/$defs/DebilityAction"
+              },
+              {
+                "$ref": "#/$defs/StatAction"
+              },
+              {
+                "$ref": "#/$defs/SheetDebilityAction"
+              }
+            ]
+          },
+          "title": "Apply",
+          "type": "array"
+        },
+        "mark_xp": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Override the tier's default; some outcomes say 'don't mark XP'.",
+          "title": "Mark Xp"
+        }
+      },
+      "title": "Outcome",
       "type": "object"
     },
     "PackMeta": {
@@ -631,12 +1074,8 @@
           "$ref": "#/$defs/StartingMoves"
         },
         "inserts": {
+          "description": "Core sections ('gear', 'followers', 'arcana') and/or ids from the pack's `inserts`.",
           "items": {
-            "enum": [
-              "gear",
-              "followers",
-              "arcana"
-            ],
             "type": "string"
           },
           "title": "Inserts",
@@ -740,7 +1179,7 @@
             }
           ],
           "default": null,
-          "description": "A stat id, a list of stat ids the player chooses from, 'choose' for any stat, or null for +nothing.",
+          "description": "A stat id, a list of stat ids the player chooses from, 'choose' for any stat, or null for +nothing. On a shared-sheet move, a stat id refers to that sheet's own stats.",
           "title": "Stat"
         },
         "bonus": {
@@ -759,6 +1198,14 @@
           ],
           "default": null,
           "title": "Label"
+        },
+        "modifiers": {
+          "description": "Bounded choices the roll dialog offers (e.g. an item's Value).",
+          "items": {
+            "$ref": "#/$defs/Modifier"
+          },
+          "title": "Modifiers",
+          "type": "array"
         }
       },
       "title": "RollSpec",
@@ -780,6 +1227,7 @@
             "choose",
             "multichoose",
             "checklist",
+            "lines",
             "pips",
             "text",
             "table",
@@ -799,6 +1247,14 @@
             "$ref": "#/$defs/Option"
           },
           "title": "Options",
+          "type": "array"
+        },
+        "lines": {
+          "description": "For lines: one row of options each, pick 1 per row.",
+          "items": {
+            "$ref": "#/$defs/Line"
+          },
+          "title": "Lines",
           "type": "array"
         },
         "min": {
@@ -853,6 +1309,17 @@
           "description": "Shown in the creation checklist when unfilled.",
           "title": "Required",
           "type": "boolean"
+        },
+        "collapsed": {
+          "default": false,
+          "description": "Start folded shut on the sheet; for long reference lists.",
+          "title": "Collapsed",
+          "type": "boolean"
+        },
+        "start": {
+          "default": null,
+          "description": "Value a freshly created sheet gets, instead of the empty default for its type.",
+          "title": "Start"
         }
       },
       "required": [
@@ -951,6 +1418,31 @@
       "title": "SharedSheetDef",
       "type": "object"
     },
+    "SheetDebilityAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "sheet_debility",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id"
+      ],
+      "title": "SheetDebilityAction",
+      "type": "object"
+    },
     "SheetStat": {
       "additionalProperties": false,
       "properties": {
@@ -1042,6 +1534,36 @@
       "title": "Stat",
       "type": "object"
     },
+    "StatAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "stat",
+          "title": "Kind",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "delta": {
+          "title": "Delta",
+          "type": "integer"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "id",
+        "delta"
+      ],
+      "title": "StatAction",
+      "type": "object"
+    },
     "Tier": {
       "additionalProperties": false,
       "properties": {
@@ -1122,6 +1644,93 @@
       "title": "Tracker",
       "type": "object"
     },
+    "Tracks": {
+      "additionalProperties": false,
+      "description": "The boxes the book prints, each drawn as its own glyph.\n\nThe rulebook uses three: a square you tick to take a thing, a diamond for one box of carried\nload, and a circle for a use or an ammo status. `bulk` and `uses` are counts of boxes;\n`statuses` names them, and they are marked left to right (Book I, p94).",
+      "properties": {
+        "marks": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Squares: plain ticks, e.g. progress towards a requirement.",
+          "title": "Marks"
+        },
+        "bulk": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Diamonds: boxes of carried load.",
+          "title": "Bulk"
+        },
+        "uses": {
+          "anyOf": [
+            {
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Circles: charges, doses, hours.",
+          "title": "Uses"
+        },
+        "statuses": {
+          "description": "Named circles marked left to right, e.g. ['low ammo', 'all out'].",
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Statuses",
+          "type": "array"
+        }
+      },
+      "title": "Tracks",
+      "type": "object"
+    },
+    "XpAction": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "xp",
+          "title": "Kind",
+          "type": "string"
+        },
+        "n": {
+          "default": 1,
+          "title": "N",
+          "type": "integer"
+        },
+        "label": {
+          "default": "",
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "title": "XpAction",
+      "type": "object"
+    },
     "XpRules": {
       "additionalProperties": false,
       "properties": {
@@ -1174,6 +1783,13 @@
         "$ref": "#/$defs/Playbook"
       },
       "title": "Playbooks",
+      "type": "array"
+    },
+    "inserts": {
+      "items": {
+        "$ref": "#/$defs/InsertDef"
+      },
+      "title": "Inserts",
       "type": "array"
     },
     "followers": {

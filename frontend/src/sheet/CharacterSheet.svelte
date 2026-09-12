@@ -4,13 +4,14 @@
   import { characterPatcher, SHEET } from '../lib/patch';
   import { api } from '../lib/api';
   import { toast } from '../lib/state.svelte';
-  import { download, playbookOf } from '../lib/util';
-  import type { CharacterRow, Section } from '../lib/types';
+  import { download, packInserts, playbookOf } from '../lib/util';
+  import type { CharacterRow, Option, Section } from '../lib/types';
   import Collapsible from '../ui/Collapsible.svelte';
   import Confirm from '../ui/Confirm.svelte';
   import Identity from './sections/Identity.svelte';
   import Stats from './sections/Stats.svelte';
   import Moves from './sections/Moves.svelte';
+  import Inserts from './sections/Inserts.svelte';
   import Gear from './sections/Gear.svelte';
   import Followers from './sections/Followers.svelte';
   import Arcana from './sections/Arcana.svelte';
@@ -26,6 +27,26 @@
   setContext(SHEET, { entity: 'character', id: row.id, p });
   let confirmDelete = $state(false);
 
+  /** Everything the sheet renders as a section: the playbook's, then each insert's. */
+  const sheetSections = $derived.by((): Section[] => [
+    ...(pb?.sections ?? []),
+    ...packInserts(content, doc).flatMap((i) => i.sections),
+  ]);
+
+  /** A picked option (or a note) can require picks of its own; report what is still short. */
+  function subChoiceGaps(sec: Section): string[] {
+    const value = doc.sections?.[sec.id];
+    const picked = Array.isArray(value) ? (value as string[]) : typeof value === 'string' ? [value] : [];
+    const out: string[] = [];
+    for (const o of sec.options as Option[]) {
+      if (o.min == null || !o.options.length) continue;
+      if (!o.note && !picked.includes(o.id)) continue;
+      const have = (doc.sub_choices[sec.id]?.[o.id] ?? []).length;
+      if (have < o.min) out.push(`${sec.title} — ${o.label}: pick ${o.min - have} more`);
+    }
+    return out;
+  }
+
   const checklist = $derived.by((): string[] => {
     const items: string[] = [];
     if (!doc.name?.trim()) items.push('Choose a name');
@@ -35,7 +56,7 @@
       const want = arr.slice().sort((a, b) => a - b).join(',');
       if (have !== want) items.push(`Assign stats from ${arr.map((n) => (n >= 0 ? '+' + n : n)).join(', ')}`);
     }
-    for (const sec of pb?.sections ?? []) {
+    for (const sec of sheetSections) {
       if (!sec.required) continue;
       const v = doc.sections?.[sec.id];
       if (sec.type === 'choose' && (v === null || v === undefined || v === '')) items.push(`Choose ${sec.title.toLowerCase()}`);
@@ -43,8 +64,15 @@
         const need = (sec.min ?? 1) - ((v as string[])?.length ?? 0);
         if (need > 0) items.push(`${sec.title}: pick ${need} more`);
       } else if (sec.type === 'checklist' && !((v as string[])?.length)) items.push(`${sec.title}: check at least one`);
-      else if (sec.type === 'text' && !String(v ?? '').trim()) items.push(`Fill in ${sec.title.toLowerCase()}`);
+      else if (sec.type === 'lines') {
+        const picks = (v ?? {}) as Record<string, string | null>;
+        const missing = sec.lines.filter((ln) => !picks[ln.id] && !(doc.option_text[sec.id]?.[ln.id] ?? '').trim()).length;
+        if (missing) items.push(`${sec.title}: choose 1 on ${missing} more line${missing > 1 ? 's' : ''}`);
+      } else if (sec.type === 'names' && !String((v as { name?: string })?.name ?? '').trim()) {
+        items.push(`Choose ${sec.title.toLowerCase()}`);
+      } else if (sec.type === 'text' && !String(v ?? '').trim()) items.push(`Fill in ${sec.title.toLowerCase()}`);
       else if (sec.type === 'table' && !((v as unknown[])?.length)) items.push(`${sec.title}: add at least one row`);
+      items.push(...subChoiceGaps(sec));
     }
     for (const c of pb?.starting_moves.choose ?? []) {
       const have = c.from.filter((id) => doc.moves.taken.includes(id)).length;
@@ -68,7 +96,7 @@
     const owner = (e.target as HTMLSelectElement).value || null;
     try { await api.post(`/api/characters/${row.id}/owner`, { owner }); } catch (err) { toast((err as Error).message, 'error'); }
   }
-  const inserts = $derived(pb?.inserts ?? ['gear']);
+  const inserts = $derived(doc.inserts);
 </script>
 
 <Collapsible id="char.{row.id}" title={doc.name || '(unnamed)'} level={2} subtitle="{pb?.name ?? doc.playbook} · {row.owner ?? 'unowned'}">
@@ -103,7 +131,8 @@
   {/each}
 
   <Moves {doc} {p} {editable} {pb} characterId={row.id} />
-  {#if inserts.includes('gear')}<Gear {doc} {p} {editable} />{/if}
+  <Inserts {doc} {p} {editable} {pb} characterId={row.id} />
+  {#if inserts.includes('gear')}<Gear {doc} {p} {editable} {pb} />{/if}
   {#if inserts.includes('followers')}<Followers {doc} {p} {editable} />{/if}
   {#if inserts.includes('arcana')}<Arcana {doc} {p} {editable} characterId={row.id} />{/if}
   <Notes {doc} {p} {editable} id={row.id} />
