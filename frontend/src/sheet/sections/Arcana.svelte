@@ -9,6 +9,7 @@
   import Pips from '../../ui/Pips.svelte';
   import Stepper from '../../ui/Stepper.svelte';
   import MoveCard from './MoveCard.svelte';
+  import { renderInline } from '../../lib/markdown';
 
   let { doc, p, editable, characterId }: { doc: CharacterDoc; p: Patcher; editable: boolean; characterId: string } = $props();
   const library = $derived(app.content!.arcana);
@@ -62,7 +63,7 @@
       {:else}
         <Markdown text={a.description} />
       {/if}
-      {#if a.prerequisites}<p class="small"><strong>To learn:</strong> {a.prerequisites}</p>{/if}
+      {#if a.prerequisites}<p class="small"><strong>To learn:</strong> {@html renderInline(a.prerequisites)}</p>{/if}
       {#if a.questions?.length}
         <div class="qs">
           {#each a.questions as q, qi}

@@ -4,6 +4,12 @@ function esc(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** One line's worth of markup, with no block wrapper: for labels, help text and triggers.
+ *  Escapes first, so a pack can emphasise a word but never inject HTML. */
+export function renderInline(s: string | null | undefined): string {
+  return s ? inline(s) : '';
+}
+
 function inline(s: string): string {
   return esc(s)
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')

@@ -11,6 +11,7 @@
   import { getContext } from 'svelte';
   import { SHEET, type SheetContext } from '../../lib/patch';
   import { presence } from '../../lib/presence.svelte';
+  import { renderInline } from '../../lib/markdown';
 
   let { section, value, editable, basePath, doc, p, idPrefix = '' }: {
     section: Section; value: unknown; editable: boolean; basePath: string;
@@ -109,7 +110,7 @@
 </script>
 
 <Collapsible id="{idPrefix}sec.{s.id}" title={s.title} subtitle={pickHint} open={!s.collapsed}>
-  {#if s.help}<p class="muted small help">{s.help}</p>{/if}
+  {#if s.help}<p class="muted small help">{@html renderInline(s.help)}</p>{/if}
 
   {#if s.type === 'choose'}
     <div class="opts">
@@ -137,12 +138,12 @@
     <div class="stack">
       {#each s.lines as ln (ln.id)}
         <div class="row lineRow">
-          {#if ln.label}<span class="muted small listlbl">{ln.label}</span>{/if}
+          {#if ln.label}<span class="muted small listlbl">{@html renderInline(ln.label)}</span>{/if}
           {#each ln.options as o (o.id)}
             <label class="chip" class:sel={lineOf(ln.id) === o.id} class:ro={!editable}>
               <input type="radio" name="{groupName}.{ln.id}" checked={lineOf(ln.id) === o.id} disabled={!editable}
                 use:presence={pres(`${basePath}/${ln.id}`)} onchange={() => setLine(ln.id, o.id)} />
-              <span>{o.label}</span>
+              <span>{@html renderInline(o.label)}</span>
             </label>
           {/each}
           {#if ln.write_in !== null}

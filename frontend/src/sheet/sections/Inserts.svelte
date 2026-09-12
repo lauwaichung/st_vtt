@@ -8,6 +8,7 @@
   import type { Patcher } from '../../lib/patch';
   import Collapsible from '../../ui/Collapsible.svelte';
   import Markdown from '../../ui/Markdown.svelte';
+  import { renderInline } from '../../lib/markdown';
   import GenericSection from './GenericSection.svelte';
   import MoveCard from './MoveCard.svelte';
 
@@ -63,7 +64,7 @@
           <span class="grow"></span>
           {#if editable}<button class="ghost small danger" title="Remove insert" onclick={() => remove(ins)}>✕</button>{/if}
         </div>
-        {#if ins.blurb}<p class="muted small">{ins.blurb}</p>{/if}
+        {#if ins.blurb}<p class="muted small">{@html renderInline(ins.blurb)}</p>{/if}
         {#if ins.description}<Markdown text={ins.description} />{/if}
 
         {#each ins.sections as sec (sec.id)}

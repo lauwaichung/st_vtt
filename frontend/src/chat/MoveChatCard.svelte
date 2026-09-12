@@ -1,6 +1,7 @@
 <script lang="ts">
   import { timeShort } from '../lib/util';
   import Markdown from '../ui/Markdown.svelte';
+  import { renderInline } from '../lib/markdown';
   import type { Message } from '../lib/types';
 
   let { message }: { message: Message } = $props();
@@ -16,7 +17,7 @@
     <span class="muted small">{timeShort(message.ts)}</span>
   </div>
   <div class="name">{p.name}</div>
-  {#if p.trigger}<p class="muted"><em>{p.trigger}</em></p>{/if}
+  {#if p.trigger}<p class="muted"><em>{@html renderInline(p.trigger)}</em></p>{/if}
   {#if p.text}<Markdown text={p.text} />{/if}
   {#if p.outcomes && Object.keys(p.outcomes).length}
     <dl class="outcomes">

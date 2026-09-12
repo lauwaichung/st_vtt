@@ -3,6 +3,7 @@
   // its nested sub-choice, rendered recursively. A `note` option is prose instead: no control,
   // and its boxes and sub-choice are always shown.
   import type { Option, TrackKind, TrackState } from '../../lib/types';
+  import { renderInline } from '../../lib/markdown';
   import type { Patcher } from '../../lib/patch';
   import DebouncedText from '../../ui/DebouncedText.svelte';
   import Tracks from '../../ui/Tracks.svelte';
@@ -46,7 +47,7 @@
 {#if option.note}
   <div class="opt note">
     <span class="body">
-      <strong>{option.label}</strong>{#if option.text}<span class="muted">&nbsp;— {option.text}</span>{/if}
+      <strong>{@html renderInline(option.label)}</strong>{#if option.text}<span class="muted">&nbsp;— {@html renderInline(option.text)}</span>{/if}
     </span>
     <Tracks tracks={option.tracks} state={tracksOf(option.id)}
       onchange={(kind, v) => ontrack(option.id, kind, v)} path={`${basePath}/${option.id}`} disabled={!editable} />
@@ -59,7 +60,7 @@
       <input type="checkbox" checked={selected} disabled={!editable} use:presence={presencePath} onchange={() => onselect(option.id)} />
     {/if}
     <span class="body">
-      <strong>{option.label}</strong>{#if option.text}<span class="muted">&nbsp;— {option.text}</span>{/if}
+      <strong>{@html renderInline(option.label)}</strong>{#if option.text}<span class="muted">&nbsp;— {@html renderInline(option.text)}</span>{/if}
     </span>
     {#if selected}
       <Tracks tracks={option.tracks} state={tracksOf(option.id)}

@@ -4,6 +4,7 @@
   import { openRoll } from '../../lib/dialogs.svelte';
   import { send } from '../../lib/ws';
   import Markdown from '../../ui/Markdown.svelte';
+  import { renderInline } from '../../lib/markdown';
   import Tracks from '../../ui/Tracks.svelte';
   import MoveOptions from './MoveOptions.svelte';
 
@@ -38,7 +39,7 @@
   </div>
   {#if open}
     <div class="body">
-      {#if move.trigger}<p class="muted"><em>{move.trigger}</em></p>{/if}
+      {#if move.trigger}<p class="muted"><em>{@html renderInline(move.trigger)}</em></p>{/if}
       {#if move.text}<Markdown text={move.text} />{/if}
       {#if Object.keys(move.outcomes).length}
         <dl class="outcomes">

@@ -25,6 +25,13 @@ every `*.json` file is merged:
 All text fields marked *markdown* support a small subset: paragraphs, `**bold**`,
 `*italic*`, `` `code` `` and `- ` bullet lists.
 
+The one-line fields a sheet displays take the same emphasis, minus the
+paragraphs and lists: an option's `label` and `text`, a line's `label`, a
+section's `help`, a playbook's or insert's `blurb`, a move's `trigger`, and an
+arcanum's `prerequisites`. So a tag reads as `*far*`, not as bare asterisks.
+Markup is escaped before it is rendered, so a pack can emphasise a word but
+never inject HTML.
+
 Unknown keys are errors, so typos are caught.
 
 ## `pack`
